@@ -19,9 +19,9 @@ Calculator::Calculator(QWidget *parent,Outputter* out, int _nX, int _nT) :
 
     double t=(rightBoundary-leftBoundary)/(_nT-1);
 
-    y.push_back(0);
+    /*y.push_back(0);
     for (int i=1;i<_nT;i++)
-        y.push_back(y.back()+t);
+        y.push_back(y.back()+t);*/
 
     a=3;
    // if (t/pow(h,2)>1.0/6) exit(123);
@@ -47,18 +47,21 @@ void Calculator::calculate()
         u[0].push_back(getAccurateValue(node,0));
         z[0].push_back(getAccurateValue(node,0));
     }
-    double time=y[0];
+    double time=leftBoundary;
+    y.push_back(time);
     while(time<rightBoundary-t)
     {
         time+=t;//y[j];
+        y.push_back(time);
         z.push_back((QVector<double>)0);
         for (int i=0;i<x[0].size();i++)
         {
             z.back().push_back(getAccurateValue(x[0][i],time));
         }
         QVector<double> uTH(x[0].size());
-
-        uTH=calculateNewton(u.back(),time,h,t);
+        QVector<double> uSupport(x[0].size());
+        uSupport=solveInterpolation(x[0],u.back(),x[0]);
+        uTH=calculateNewton(uSupport/*u.back()*/,time,h,t);
         u.push_back(uTH);
 
 
@@ -73,7 +76,6 @@ void Calculator::calculate()
 
     }
 
-    double j=3+4;
 }
 
 QVector<double> Calculator::calculateNewton(QVector<double> oldU,double time,double h, double t)
