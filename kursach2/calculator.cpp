@@ -16,13 +16,6 @@ Calculator::Calculator(QWidget *parent,Outputter* out, int _nX, int _nT) :
     x[0].push_back(leftBoundary);
     for (int i=1;i<_nX;i++)
         x[0].push_back(x[0].back()+h);
-
-    double t=(rightBoundary-leftBoundary)/(_nT-1);
-
-    /*y.push_back(0);
-    for (int i=1;i<_nT;i++)
-        y.push_back(y.back()+t);*/
-
     a=3;
    // if (t/pow(h,2)>1.0/6) exit(123);
 
@@ -44,26 +37,40 @@ void Calculator::calculate()
 
     foreach(double node,x[0])
     {
-        u[0].push_back(getAccurateValue(node,0));
-        z[0].push_back(getAccurateValue(node,0));
+        u[0].push_back(getAccurateValue(node,0));   //Beginning
+        z[0].push_back(getAccurateValue(node,0));  //conditions
     }
     double time=leftBoundary;
     y.push_back(time);
+
     while(time<rightBoundary-t)
     {
-        time+=t;//y[j];
+        time+=t;
         y.push_back(time);
         z.push_back((QVector<double>)0);
         for (int i=0;i<x[0].size();i++)
         {
             z.back().push_back(getAccurateValue(x[0][i],time));
         }
-        QVector<double> uTH(x[0].size());
-        QVector<double> uSupport(x[0].size());
-        uSupport=solveInterpolation(x[0],u.back(),x[0]);
-        uTH=calculateNewton(uSupport/*u.back()*/,time,h,t);
+
+        QVector<double> uTH(x.back().size());
+        QVector<double> uSupport;
+        QVector<double> oldX=x.back();
+        QVector<double> erors;
+        QVector<double> doubleX;
+        QVector<double> uTHdiv2;
+        QVector<double> uTdiv2H;
+        doubleX=getDoubleX(oldX);
+
+        uSupport=solveInterpolation(oldX,u.back(),doubleX);
+        uTHdiv2=calculateNewton(uSupport,time,h,t);
+
+        uTdiv2H=calculateNewton(u.back(),time,h,t/2);
+        uTdiv2H=calculateNewton(uTdiv2H,time+t/2,h,t/2);
+        uTH=calculateNewton(u.back(),time,h,t);
         u.push_back(uTH);
 
+        x.push_back(createNewWeb(oldX, erors));
 
         double argument=leftBoundary;
         foreach (double value, u.back())
@@ -80,7 +87,7 @@ void Calculator::calculate()
 
 QVector<double> Calculator::calculateNewton(QVector<double> oldU,double time,double h, double t)
 {
-    QVector<double> result(u.back().size());
+    QVector<double> result(oldU.size());
     result=oldU;
 
     result[0]=getAccurateValue(leftBoundary,time);
@@ -111,16 +118,30 @@ QVector<double> Calculator::calculateNewton(QVector<double> oldU,double time,dou
 
 QVector<double> Calculator::fillYacoby(QVector<double> us,double h, double t)
 {
-    QVector<double> A(u.back().size()*u.back().size());
+    QVector<double> A(us.size()*us.size());
     A[0]=1;
-    for (int i=1;i<u.back().size()-1;i++)
+    for (int i=1;i<us.size()-1;i++)
     {
-        A[i*u.back().size()+i]=dfdui(us[i],us[i+1],us[i-1],h,t);
-        A[i*u.back().size()+i+1]=dfduiplus1(us[i],us[i+1],us[i-1],h,t);
-        A[i*u.back().size()+i-1]=dfduiminus1(us[i],us[i+1],us[i-1],h,t);
+        A[i*us.size()+i]=dfdui(us[i],us[i+1],us[i-1],h,t);
+        A[i*us.size()+i+1]=dfduiplus1(us[i],us[i+1],us[i-1],h,t);
+        A[i*us.size()+i-1]=dfduiminus1(us[i],us[i+1],us[i-1],h,t);
     }
     A[A.size()-1]=1;
     return A;
+}
+
+QVector<double> Calculator::createNewWeb(QVector<double> oldX, QVector<double> erors)
+{
+    return oldX;   //temporary
+}
+QVector<double> Calculator::getDoubleX(QVector<double> oldX)
+{
+    QVector<double> newX(oldX.size()*2);
+    double h=(rightBoundary-leftBoundary)/(newX.size()-1);
+    newX[0]=leftBoundary;
+    for (int i=1;i<newX.size();i++)
+        newX[i]=newX[i-1]+h;
+    return newX;
 }
 
 double Calculator::dfdui(double ui, double uiplus1, double uiminus1,double h, double t)
