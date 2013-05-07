@@ -60,6 +60,7 @@ void Calculator::calculate()
         QVector<double> doubleX;
         QVector<double> uTHdiv2;
         QVector<double> uTdiv2H;
+        QVector<double> uClarify;
         doubleX=getDoubleX(oldX);
 
         uSupport=solveInterpolation(oldX,u.back(),doubleX);
@@ -68,7 +69,11 @@ void Calculator::calculate()
         uTdiv2H=calculateNewton(u.back(),time,h,t/2);
         uTdiv2H=calculateNewton(uTdiv2H,time+t/2,h,t/2);
         uTH=calculateNewton(u.back(),time,h,t);
-        u.push_back(uTH);
+
+        double eps=getEps(uTH,uTdiv2H,uTHdiv2);
+        uClarify=clarifyU(uTH,uTdiv2H,uTHdiv2);
+        u.push_back(uTH);//uClarify);//uTH);
+        double test=getMax(x.back());
 
         x.push_back(createNewWeb(oldX, erors));
 
@@ -143,35 +148,55 @@ QVector<double> Calculator::getDoubleX(QVector<double> oldX)
         newX[i]=newX[i-1]+h;
     return newX;
 }
+double  Calculator::getEps(QVector<double> uTH, QVector<double> uTdiv2H, QVector<double> uTHdiv2)
+{
+    QVector<double> eps(uTH.size());
+    for (int i=0;i<eps.size();i++)
+    {
+        eps[i]=2 * uTdiv2H[i]+4.0/3 * uTHdiv2[i*2]-10.0/3 * uTH[i];
+    }
+    double maxEps=getMax(eps);
+    return maxEps;
+}
+
+QVector<double> Calculator::clarifyU(QVector<double> uTH, QVector<double> uTdiv2H, QVector<double> uTHdiv2)
+{
+    QVector<double> clU(uTH.size());
+    for (int i=0;i<clU.size();i++)
+    {
+        clU[i]=2 * uTdiv2H[i]+4.0/3 * uTHdiv2[i*2]-7.0/3 * uTH[i];
+    }
+    return clU;
+}
 
 double Calculator::dfdui(double ui, double uiplus1, double uiminus1,double h, double t)
 {
 
-    double sigma=a*t/pow(2*h,2);
-    double ksi=a*t/(2*h*h);
+    double sigma=2*a*t/pow(2*h,2);                     //2 is for implicide method, without 2 is for Krank-Nikolson;
+    double ksi=2*a*t/(2*h*h);
     return -1 + 2*ksi*ui*(-3*ui+uiplus1+uiminus1)+sigma*pow(uiplus1-uiminus1,2);
 }
 
 double Calculator::dfduiplus1(double ui,double uiplus1, double uiminus1,double h, double t)
 {
-    double sigma=a*t/pow(2*h,2);
-    double ksi=a*t/(2*h*h);
+    double sigma=2*a*t/pow(2*h,2);
+    double ksi=2*a*t/(2*h*h);
     return ui*(ui*ksi+2*sigma*(uiplus1-uiminus1));
 }
 
 double Calculator::dfduiminus1(double ui,double uiplus1, double uiminus1,double h, double t)
 {
 
-    double sigma=a*t/pow(2*h,2);
-    double ksi=a*t/(2*h*h);
+    double sigma=2*a*t/pow(2*h,2);
+    double ksi=2*a*t/(2*h*h);
     return ui*(ui*ksi+2*sigma*(uiminus1-uiplus1));
 }
 double Calculator::fi(QVector<double> oldU,double ui, double uiplus1, double uiminus1,int i,double h, double t)
 {
-    double sigma=a*t/pow(2.0*h,2);
-    double ksi=a*t/(2.0*h*h);
-    return oldU[i]-ui+sigma*ui*pow((uiplus1-uiminus1),2)+ksi*pow(ui,2)*(uiminus1-2*ui+uiplus1)
-            +sigma*oldU[i]*pow((oldU[i+1]-oldU[i-1]),2)+ksi*pow(oldU[i],2)*(oldU[i-1]-2*oldU[i]+oldU[i+1]);
+    double sigma=2*a*t/pow(2.0*h,2);
+    double ksi=2*a*t/(2.0*h*h);
+    return oldU[i]-ui+sigma*ui*pow((uiplus1-uiminus1),2)+ksi*pow(ui,2)*(uiminus1-2*ui+uiplus1);
+            //+sigma*oldU[i]*pow((oldU[i+1]-oldU[i-1]),2)+ksi*pow(oldU[i],2)*(oldU[i-1]-2*oldU[i]+oldU[i+1]);  This string is for Krank-Nikolson
 
 }
 
@@ -350,3 +375,12 @@ QVector<double> Calculator::solveInterpolation(QVector<double> xOld, QVector<dou
             }
             return yNew;
         }
+double Calculator::getMax(QVector<double> array)
+{
+    double max=array[0];
+    foreach(double value, array)
+    {
+        if (fabs(max)<fabs(value)) max=value;
+    }
+    return max;
+}
