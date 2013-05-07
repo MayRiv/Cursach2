@@ -64,15 +64,16 @@ void Calculator::calculate()
         doubleX=getDoubleX(oldX);
 
         uSupport=solveInterpolation(oldX,u.back(),doubleX);
-        uTHdiv2=calculateNewton(uSupport,time,h,t);
+        uTHdiv2=calculateNewton(uSupport,time,h/2,t);              //STEP HAVE BE ANOTHER
 
-        uTdiv2H=calculateNewton(u.back(),time,h,t/2);
-        uTdiv2H=calculateNewton(uTdiv2H,time+t/2,h,t/2);
+        uTdiv2H=calculateNewton(u.back(),time-t/2,h,t/2);
+        uTdiv2H=calculateNewton(uTdiv2H,time,h,t/2);
+
         uTH=calculateNewton(u.back(),time,h,t);
 
         double eps=getEps(uTH,uTdiv2H,uTHdiv2);
         uClarify=clarifyU(uTH,uTdiv2H,uTHdiv2);
-        u.push_back(uTH);//uClarify);//uTH);
+        u.push_back(uClarify);//uTH);
         double test=getMax(x.back());
 
         x.push_back(createNewWeb(oldX, erors));
