@@ -18,7 +18,7 @@ Calculator::Calculator(QWidget *parent,Outputter* out, int _nX, int _nT) :
         x[0].push_back(x[0].back()+h);
     a=3;
    // if (t/pow(h,2)>1.0/6) exit(123);
-
+    edop=0.001;
     nX=_nX;
     nT=_nT;
 }
@@ -73,9 +73,11 @@ void Calculator::calculate()
 
         double eps=getEps(uTH,uTdiv2H,uTHdiv2);
         uClarify=clarifyU(uTH,uTdiv2H,uTHdiv2);
-        u.push_back(uClarify);//uTH);
-        double test=getMax(x.back());
 
+        u.push_back(uClarify);
+        double alpha,betta;
+        getCoeffs(uClarify, uTdiv2H,uTHdiv2,h,t,alpha,betta);
+        t*=alpha;
         x.push_back(createNewWeb(oldX, erors));
 
         double argument=leftBoundary;
@@ -88,7 +90,7 @@ void Calculator::calculate()
         _out->stream << "\n";
 
     }
-
+ _out->stream << y.size();
 }
 
 QVector<double> Calculator::calculateNewton(QVector<double> oldU,double time,double h, double t)
@@ -159,6 +161,34 @@ double  Calculator::getEps(QVector<double> uTH, QVector<double> uTdiv2H, QVector
     double maxEps=getMax(eps);
     return maxEps;
 }
+QVector<double> Calculator::getCoeffs(QVector<double> uTH, QVector<double> uTdiv2H, QVector<double> uTHdiv2,double h, double t,double& alphaOut, double& bettaOut)
+{
+
+    QVector<double> C1(uTH.size()),C2(uTH.size());
+    for (int i=0;i< uTH.size();i++)
+    {
+        C1[i]=2.0/pow(t,2)*(uTdiv2H[i]-uTH[i]);
+        C2[i]=4.0/(3.0*h*h*t)*(uTHdiv2[i*2]-uTH[i]);
+
+    }
+
+    QVector<double> alphai(uTH.size()),bettai(uTH.size());
+    for (int i=0;i< uTH.size();i++)
+    {
+        alphai[i]=sqrt(edop/(2*fabs(C1[i])*pow(t,2)));
+    }
+    double alpha=getMin(alphai);
+    QVector<double> e1(uTH.size());
+    for (int i=0;i<e1.size();i++)
+     {
+        e1[i]=edop-fabs(C1[i])*pow(alpha*t,2);
+        bettai[i]=1.0/h*sqrt(e1[i]/(alpha*t*fabs(C2[i])));
+     }
+    double betta=getMin(bettai);
+    alphaOut=alpha;
+    bettaOut=betta;
+    return bettai;
+}
 
 QVector<double> Calculator::clarifyU(QVector<double> uTH, QVector<double> uTdiv2H, QVector<double> uTHdiv2)
 {
@@ -192,6 +222,7 @@ double Calculator::dfduiminus1(double ui,double uiplus1, double uiminus1,double 
     double ksi=2*a*t/(2*h*h);
     return ui*(ui*ksi+2*sigma*(uiminus1-uiplus1));
 }
+
 double Calculator::fi(QVector<double> oldU,double ui, double uiplus1, double uiminus1,int i,double h, double t)
 {
     double sigma=2*a*t/pow(2.0*h,2);
@@ -384,4 +415,13 @@ double Calculator::getMax(QVector<double> array)
         if (fabs(max)<fabs(value)) max=value;
     }
     return max;
+}
+double Calculator::getMin(QVector<double> array)
+{
+    double min=array[0];
+    foreach(double value, array)
+    {
+        if (fabs(min)>fabs(value)) min=value;
+    }
+    return min;
 }

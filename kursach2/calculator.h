@@ -24,7 +24,9 @@ private:
     QVector<double> getDoubleX(QVector<double> oldX);
     double getEps (QVector<double> uTH, QVector<double> uTdiv2H, QVector<double> uTHdiv2);
     double getMax(QVector<double> array);
+    double getMin(QVector<double> array);
     QVector<double> clarifyU(QVector<double> uTH, QVector<double> uTdiv2H, QVector<double> uTHdiv2);
+    QVector<double> getCoeffs(QVector<double> uTH, QVector<double> uTdiv2H, QVector<double> uTHdiv2,double h, double t,double& alphaOut, double& bettaOut);
     double* methodGauss02(const double* pA,	const double* pB,	int n );
     QVector<double> solveGauss(QVector<double> A, QVector<double> B);
     QVector<double> solveInterpolation(QVector<double> xOld, QVector<double> yOld, QVector<double> xNew);
@@ -38,6 +40,7 @@ private:
     double a;
     int nX,nT;
     double leftBoundary,rightBoundary;
+    double edop;
     Outputter* _out;
 };
 
