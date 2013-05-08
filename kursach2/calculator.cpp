@@ -3,6 +3,7 @@
 #include "ui_calculator.h"
 #include <math.h>
 #include <iostream>
+#include <QDebug>
 Calculator::Calculator(QWidget *parent,Outputter* out, int _nX, int _nT) :
     QDialog(parent),
     ui(new Ui::Calculator)
@@ -18,7 +19,9 @@ Calculator::Calculator(QWidget *parent,Outputter* out, int _nX, int _nT) :
         x[0].push_back(x[0].back()+h);
     a=3;
    // if (t/pow(h,2)>1.0/6) exit(123);
-    edop=0.001;
+    edop=0.01;
+    hMax=(rightBoundary-leftBoundary)/4;
+    hMin=(rightBoundary-leftBoundary)/1000;
     nX=_nX;
     nT=_nT;
 }
@@ -56,7 +59,7 @@ void Calculator::calculate()
         QVector<double> uTH(x.back().size());
         QVector<double> uSupport;
         QVector<double> oldX=x.back();
-        QVector<double> erors;
+        QVector<double> betta;
         QVector<double> doubleX;
         QVector<double> uTHdiv2;
         QVector<double> uTdiv2H;
@@ -72,22 +75,33 @@ void Calculator::calculate()
         uTH=calculateNewton(u.back(),time,h,t);
 
         double eps=getEps(uTH,uTdiv2H,uTHdiv2);
-        uClarify=clarifyU(uTH,uTdiv2H,uTHdiv2);
-
-        u.push_back(uClarify);
-        double alpha,betta;
-        getCoeffs(uClarify, uTdiv2H,uTHdiv2,h,t,alpha,betta);
-        t*=alpha;
-        x.push_back(createNewWeb(oldX, erors));
-
-        double argument=leftBoundary;
-        foreach (double value, u.back())
+        if (fabs(eps)>edop)
         {
-            std::cout <<"time is " << time <<" yApp=  " << value <<" yAcc=  " <<getAccurateValue(argument,time) <<" absPoh=  "<< value-getAccurateValue(argument,time)  << " otnPoh=  "<<(value-getAccurateValue(argument,time))/value*100. <<"\n";
-            argument+=h;
+            h/=2;
+            time-=t;
+            t/=2;
+            QVector<double> supportX=getDoubleX(x.back());
+            u.back()=solveInterpolation(x.back(),u.back(),supportX);
+            x.back()=supportX;
         }
+        else
+        {
+          uClarify=clarifyU(uTH,uTdiv2H,uTHdiv2);
+          u.push_back(uClarify);
+          double alpha;
+          QVector<double> bettas=getCoeffs(uClarify, uTdiv2H,uTHdiv2,h,t,alpha);
+          t*=alpha;
+          x.push_back(createNewWeb(oldX, bettas));
 
-        _out->stream << "\n";
+          double argument=leftBoundary;
+          foreach (double value, u.back())
+          {
+             _out->stream /*std::cout*/ <<"time is " << time <<" yApp=  " << value <<" yAcc=  " <<getAccurateValue(argument,time) <<" absPoh=  "<< value-getAccurateValue(argument,time)  << " otnPoh=  "<<(value-getAccurateValue(argument,time))/value*100. <<"\n";
+             argument+=h;
+          }
+
+         }
+         _out->stream << "\n";
 
     }
  _out->stream << y.size();
@@ -138,9 +152,26 @@ QVector<double> Calculator::fillYacoby(QVector<double> us,double h, double t)
     return A;
 }
 
-QVector<double> Calculator::createNewWeb(QVector<double> oldX, QVector<double> erors)
+QVector<double> Calculator::createNewWeb(QVector<double> oldX, QVector<double> bettas)
 {
-    return oldX;   //temporary
+       //temporary
+    double betta=getMin(bettas);
+    double h=oldX[1]-oldX[0];
+
+    h*=betta;
+    if (h>hMax) h=hMax;
+    int number=(rightBoundary-leftBoundary)/h+1;
+    QVector<double> x(number);
+    x[0]=leftBoundary;
+    for (int i=1;i<number;i++)
+        x[i]=x[i-1]+h;
+    if (x.back()!=rightBoundary)
+    {
+        qDebug() << "error in a function create new web";
+        exit(4);
+    }
+    //return oldX;
+    return x;
 }
 QVector<double> Calculator::getDoubleX(QVector<double> oldX)
 {
@@ -161,7 +192,7 @@ double  Calculator::getEps(QVector<double> uTH, QVector<double> uTdiv2H, QVector
     double maxEps=getMax(eps);
     return maxEps;
 }
-QVector<double> Calculator::getCoeffs(QVector<double> uTH, QVector<double> uTdiv2H, QVector<double> uTHdiv2,double h, double t,double& alphaOut, double& bettaOut)
+QVector<double> Calculator::getCoeffs(QVector<double> uTH, QVector<double> uTdiv2H, QVector<double> uTHdiv2,double h, double t,double& alphaOut)
 {
 
     QVector<double> C1(uTH.size()),C2(uTH.size());
@@ -184,9 +215,7 @@ QVector<double> Calculator::getCoeffs(QVector<double> uTH, QVector<double> uTdiv
         e1[i]=edop-fabs(C1[i])*pow(alpha*t,2);
         bettai[i]=1.0/h*sqrt(e1[i]/(alpha*t*fabs(C2[i])));
      }
-    double betta=getMin(bettai);
     alphaOut=alpha;
-    bettaOut=betta;
     return bettai;
 }
 
