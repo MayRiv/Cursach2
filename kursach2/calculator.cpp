@@ -107,7 +107,7 @@ QVector<double> Calculator::calculateNewton(QVector<double> oldU,double time,dou
         du[i]=5;
 
 
-    while (fabs(du[3])>0.005)
+    while (fabs(getMax(du))>0.005)
     {
         B[0]=0;
         B[B.size()-1]=0;
