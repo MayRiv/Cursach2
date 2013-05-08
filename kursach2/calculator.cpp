@@ -340,9 +340,9 @@ QVector<double> Calculator::solveGauss(QVector<double> A, QVector<double> B)//В
    pX=methodGauss02(pA,pB,B.size());
    QVector<double> result(B.size());
    for (int i=0;i<B.size();i++) result[i]=pX[i];
-   delete pA;
-   delete pB;
-   delete pX;
+   delete [] pA;
+   delete [] pB;
+   delete [] pX;
    return result;
 
 }
