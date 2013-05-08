@@ -142,7 +142,7 @@ QVector<double> Calculator::createNewWeb(QVector<double> oldX, QVector<double> e
 }
 QVector<double> Calculator::getDoubleX(QVector<double> oldX)
 {
-    QVector<double> newX(oldX.size()*2);
+    QVector<double> newX(oldX.size()*2-1);
     double h=(rightBoundary-leftBoundary)/(newX.size()-1);
     newX[0]=leftBoundary;
     for (int i=1;i<newX.size();i++)

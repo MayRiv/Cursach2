@@ -10,11 +10,23 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     Outputter out;
     QDialog dialog;
-    Calculator calculator(&dialog,&out,5,100);
+    Calculator calculator(&dialog,&out,5,200);
     calculator.calculate();
     calculator.show();
-
-
+    QVector<double> array(10),oldX(10),newX(20),newArray(20);
+    array[0]=0;
+    newX[0]=oldX[0]=0;
+    double h=1.0/(10.0-1);
+    int i;
+    for (i=1;i<10;i++)
+    {
+        oldX[i]=oldX[i-1]+h;
+        array[i]=sin(oldX[i]);
+    }
+    h/=2;
+    for (int j=1;j<20;j++)
+        newX[j]=newX[j-1]+h;
+    newArray=solveInterpolation(oldX,array,newX);
 
     out.view();
     out.show();
