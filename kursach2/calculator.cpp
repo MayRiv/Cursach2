@@ -19,7 +19,7 @@ Calculator::Calculator(QWidget *parent,Outputter* out, int _nX, int _nT) :
         x[0].push_back(x[0].back()+h);
     a=3;
    // if (t/pow(h,2)>1.0/6) exit(123);
-    edop=0.01;
+    edop=0.001;
     hMax=(rightBoundary-leftBoundary)/4;
     hMin=(rightBoundary-leftBoundary)/1000;
     nX=_nX;
@@ -154,13 +154,14 @@ QVector<double> Calculator::fillYacoby(QVector<double> us,double h, double t)
 
 QVector<double> Calculator::createNewWeb(QVector<double> oldX, QVector<double> bettas)
 {
-       //temporary
+
     double betta=getMin(bettas);
     double h=oldX[1]-oldX[0];
 
     h*=betta;
     if (h>hMax) h=hMax;
     int number=(rightBoundary-leftBoundary)/h+1;
+    h=(rightBoundary-leftBoundary)/(number-1);//floor;
     QVector<double> x(number);
     x[0]=leftBoundary;
     for (int i=1;i<number;i++)
