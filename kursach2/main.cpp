@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     Outputter out;
     QDialog dialog;
-    Calculator calculator(&dialog,&out,5,200);
+    Calculator calculator(&dialog,&out,10,200);
     calculator.calculate();
     calculator.show();
     QVector<double> array(10),oldX(10),newX(20),newArray(20);

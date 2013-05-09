@@ -17,7 +17,7 @@ Calculator::Calculator(QWidget *parent,Outputter* out, int _nX, int _nT) :
     x[0].push_back(leftBoundary);
     for (int i=1;i<_nX;i++)
         x[0].push_back(x[0].back()+h);
-    a=3;
+    a=5;
    // if (t/pow(h,2)>1.0/6) exit(123);
     edop=0.001;
     hMax=(rightBoundary-leftBoundary)/4;
@@ -59,7 +59,7 @@ void Calculator::calculate()
         QVector<double> uTH(x.back().size());
         QVector<double> uSupport;
         QVector<double> oldX=x.back();
-        QVector<double> betta;
+       // QVector<double> betta;
         QVector<double> doubleX;
         QVector<double> uTHdiv2;
         QVector<double> uTdiv2H;
@@ -67,7 +67,7 @@ void Calculator::calculate()
         doubleX=getDoubleX(oldX);
 
         uSupport=solveInterpolation(oldX,u.back(),doubleX);
-        uTHdiv2=calculateNewton(uSupport,time,h/2,t);              //STEP HAVE BE ANOTHER
+        uTHdiv2=calculateNewton(uSupport,time,h/2,t);
 
         uTdiv2H=calculateNewton(u.back(),time-t/2,h,t/2);
         uTdiv2H=calculateNewton(uTdiv2H,time,h,t/2);
@@ -83,15 +83,21 @@ void Calculator::calculate()
             QVector<double> supportX=getDoubleX(x.back());
             u.back()=solveInterpolation(x.back(),u.back(),supportX);
             x.back()=supportX;
+
         }
         else
         {
           uClarify=clarifyU(uTH,uTdiv2H,uTHdiv2);
-          u.push_back(uClarify);
           double alpha;
           QVector<double> bettas=getCoeffs(uClarify, uTdiv2H,uTHdiv2,h,t,alpha);
-          t*=alpha;
           x.push_back(createNewWeb(oldX, bettas));
+          QVector<double> uFitsNewWeb=solveInterpolation(oldX,uClarify,x.back());
+          //u.push_back(uClarify);
+          u.push_back(uFitsNewWeb);
+
+
+          t*=alpha;
+
 
           double argument=leftBoundary;
           foreach (double value, u.back())
@@ -166,6 +172,7 @@ QVector<double> Calculator::createNewWeb(QVector<double> oldX, QVector<double> b
     x[0]=leftBoundary;
     for (int i=1;i<number;i++)
         x[i]=x[i-1]+h;
+    x.last()=1;//kostul merzkiy                     //vse hernya tyt
     if (x.back()!=rightBoundary)
     {
         qDebug() << "error in a function create new web";
@@ -266,6 +273,7 @@ double Calculator::getAccurateValue(double x, double y)
 {
     double B;
     double A=B=3;
+    //B=0.7;
     return pow(pow((x-A),2)/(4*a*(B-y)),1.0/2);
 
 }
