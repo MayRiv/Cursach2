@@ -22,6 +22,8 @@ Calculator::Calculator(QWidget *parent,Outputter* out, int _nX, int _nT) :
     edop=0.001;
     hMax=(rightBoundary-leftBoundary)/4;
     hMin=(rightBoundary-leftBoundary)/1000;
+    tMin=(rightBoundary-leftBoundary)/1000;
+    tMax=(rightBoundary-leftBoundary)/4;
     nX=_nX;
     nT=_nT;
 }
@@ -75,11 +77,13 @@ void Calculator::calculate()
         uTH=calculateNewton(u.back(),time,h,t);
 
         double eps=getEps(uTH,uTdiv2H,uTHdiv2);
-        if (fabs(eps)>edop)
+        if (fabs(eps)>edop )
         {
             h/=2;
+            if (h<hMin) h=hMin;
             time-=t;
             t/=2;
+            if (t<tMin) t=tMin;
             QVector<double> supportX=getDoubleX(x.back());
             u.back()=solveInterpolation(x.back(),u.back(),supportX);
             x.back()=supportX;
@@ -90,7 +94,8 @@ void Calculator::calculate()
           uClarify=clarifyU(uTH,uTdiv2H,uTHdiv2);
           double alpha;
           QVector<double> bettas=getCoeffs(uClarify, uTdiv2H,uTHdiv2,h,t,alpha);
-          x.push_back(createNewWeb(oldX, bettas));
+
+          x.push_back(createNewWeb(oldX, bettas,h));
           QVector<double> uFitsNewWeb=solveInterpolation(oldX,uClarify,x.back());
           //u.push_back(uClarify);
           u.push_back(uFitsNewWeb);
@@ -158,11 +163,10 @@ QVector<double> Calculator::fillYacoby(QVector<double> us,double h, double t)
     return A;
 }
 
-QVector<double> Calculator::createNewWeb(QVector<double> oldX, QVector<double> bettas)
+QVector<double> Calculator::createNewWeb(QVector<double> oldX, QVector<double> bettas,double& h)
 {
 
     double betta=getMin(bettas);
-    double h=oldX[1]-oldX[0];
 
     h*=betta;
     if (h>hMax) h=hMax;
@@ -172,11 +176,12 @@ QVector<double> Calculator::createNewWeb(QVector<double> oldX, QVector<double> b
     x[0]=leftBoundary;
     for (int i=1;i<number;i++)
         x[i]=x[i-1]+h;
-    x.last()=1;//kostul merzkiy                     //vse hernya tyt
+    //x.last()=1;//kostul merzkiy                     //vse hernya tyt
+    if (h*(number-1)!=rightBoundary) qDebug() << "error in a function create new web";
     if (x.back()!=rightBoundary)
     {
         qDebug() << "error in a function create new web";
-        exit(4);
+       // exit(4);
     }
     //return oldX;
     return x;
