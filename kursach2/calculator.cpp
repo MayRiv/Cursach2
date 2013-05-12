@@ -47,7 +47,13 @@ void Calculator::calculate()
     }
     double time=leftBoundary;
     y.push_back(time);
-
+    QVector<double> doubleX;
+    QVector<double> uTHdiv2;
+    QVector<double> uTdiv2H;
+    QVector<double> uClarify;
+    QVector<double> oldX;
+    QVector<double> uTH;
+    QVector<double> uSupport;
     while(time<rightBoundary-t)
     {
         time+=t;
@@ -58,23 +64,20 @@ void Calculator::calculate()
             z.back().push_back(getAccurateValue(x[0][i],time));
         }
 
-        QVector<double> uTH(x.back().size());
-        QVector<double> uSupport;
-        QVector<double> oldX=x.back();
+        uTH.resize(x.back().size());
+
+        oldX=x.back();
        // QVector<double> betta;
-        QVector<double> doubleX;
-        QVector<double> uTHdiv2;
-        QVector<double> uTdiv2H;
-        QVector<double> uClarify;
+
         doubleX=getDoubleX(oldX);
 
         uSupport=solveInterpolation(oldX,u.back(),doubleX);
-        uTHdiv2=calculateNewton(uSupport,time,h/2,t);
+        uTHdiv2=calculateNewton(uSupport,time,h/2,t,getSteps(oldX));
 
-        uTdiv2H=calculateNewton(u.back(),time-t/2,h,t/2);
-        uTdiv2H=calculateNewton(uTdiv2H,time,h,t/2);
+        uTdiv2H=calculateNewton(u.back(),time-t/2,h,t/2,getSteps(oldX));
+        uTdiv2H=calculateNewton(uTdiv2H,time,h,t/2,getSteps(oldX));
 
-        uTH=calculateNewton(u.back(),time,h,t);
+        uTH=calculateNewton(u.back(),time,h,t,getSteps(oldX));
 
         double eps=getEps(uTH,uTdiv2H,uTHdiv2);
         if (fabs(eps)>edop )
@@ -118,7 +121,7 @@ void Calculator::calculate()
  _out->stream << y.size();
 }
 
-QVector<double> Calculator::calculateNewton(QVector<double> oldU,double time,double h, double t)
+QVector<double> Calculator::calculateNewton(QVector<double> oldU, double time, double h, double t, QVector<double> steps)
 {
     QVector<double> result(oldU.size());
     result=oldU;
@@ -188,11 +191,26 @@ QVector<double> Calculator::createNewWeb(QVector<double> oldX, QVector<double> b
 }
 QVector<double> Calculator::getDoubleX(QVector<double> oldX)
 {
-    QVector<double> newX(oldX.size()*2-1);
+   /* QVector<double> newX(oldX.size()*2-1);
     double h=(rightBoundary-leftBoundary)/(newX.size()-1);
     newX[0]=leftBoundary;
     for (int i=1;i<newX.size();i++)
         newX[i]=newX[i-1]+h;
+    */
+    QVector<double> stepsOld=getSteps(oldX);
+    QVector<double> stepsNew;
+    for (int i=0;i<stepsOld.size();i++)
+    {
+        stepsNew.push_back(stepsOld[i]/2);
+        stepsNew.push_back(stepsOld[i]/2);
+    }
+
+    QVector<double> newX(oldX.size()*2-1);
+    newX[0]=leftBoundary;
+    for (int i=1;i<newX.size();i++)
+    {
+        newX[i]=newX[i-1]+stepsNew[i-1];
+    }
     return newX;
 }
 double  Calculator::getEps(QVector<double> uTH, QVector<double> uTdiv2H, QVector<double> uTHdiv2)
@@ -280,11 +298,9 @@ double Calculator::dfduiminus1(double ui, double uiplus1, double uiminus1, doubl
 
     double sigma=2*a*t/pow(2*hi,2);
     double ksi=2*a*t/(2*hi*hi);
-    //return ui*(ui*ksi+2*sigma*(uiminus1-uiplus1));
+
 
     double eps=0.0001;
-    //return (fi(oldU,ui,uiplus1,uiminus1+eps,i,hi,hp1,t)-fi(oldU,ui,uiplus1,uiminus1,i,hi,hp1,t))/eps;
-    //return a*t*x*(c*h*x+h*h*(x-z)+p*p*(y-z))/(c*c*h*h);
     double y=uiplus1;
     double x=ui;
     double z=uiminus1;
@@ -503,4 +519,11 @@ double Calculator::getMin(QVector<double> array)
         if (fabs(min)>fabs(value)) min=value;
     }
     return min;
+}
+QVector<double> Calculator::getSteps(QVector<double> x)
+{
+    QVector<double> steps;
+    for (int i=0;i<x.size()-1;i++)
+        steps.push_back(x[i+1]-x[i]);
+    return steps;
 }
