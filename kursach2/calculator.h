@@ -18,7 +18,7 @@ public:
     void calculate();
 private:
     double getAccurateValue(double x, double y);
-    QVector<double> fillYacoby(QVector<double> us, double h, double t);
+    QVector<double> fillYacoby(QVector<double> us, QVector<double> oldU, double h, double t);
     QVector<double> calculateNewton(QVector<double> oldU, double time, double h, double t);
     QVector<double> createNewWeb(QVector<double> oldX, QVector<double> bettas, double &h);
     QVector<double> getDoubleX(QVector<double> oldX);
@@ -30,10 +30,10 @@ private:
     double* methodGauss02(const double* pA,	const double* pB,	int n );
     QVector<double> solveGauss(QVector<double> A, QVector<double> B);
     QVector<double> solveInterpolation(QVector<double> xOld, QVector<double> yOld, QVector<double> xNew);
-    double dfdui(double ui,double uiplus1, double uiminus1, double h, double t);
-    double dfduiplus1(double ui,double uiplu1, double uiminus1, double h, double t);
-    double dfduiminus1(double ui, double uiplus1, double uiminus1, double h, double t);
-    double fi(QVector<double> oldU,double ui, double uiplus1, double uiminus1, int i, double h, double t);
+    double dfdui(double ui, double uiplus1, double uiminus1, double hi, double hp1, double t, QVector<double> uOld, int i);
+    double dfduiplus1(double ui, double uiplu1, double uiminus1, double hi, double hp1, double t, QVector<double> uOld, int i);
+    double dfduiminus1(double ui, double uiplus1, double uiminus1, double hi, double hp1, double t, QVector<double> uOld, int i);
+    double fi(QVector<double> oldU, double ui, double uiplus1, double uiminus1, int i, double hi, double hp1, double t);
     QVector<double> y;//x=space, y=time
     QVector<QVector<double> > z,u,x;//z=accurate, u=approximate
     Ui::Calculator *ui;

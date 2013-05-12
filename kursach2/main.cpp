@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     Outputter out;
     QDialog dialog;
-    Calculator calculator(&dialog,&out,50,200);
+    Calculator calculator(&dialog,&out,60,200);
     calculator.calculate();
     calculator.show();
     double A[16]={
@@ -29,8 +29,8 @@ int main(int argc, char *argv[])
     QVector<double> B(4);
     for (int i=0;i<4;i++)
         B[i]=i*i;
-    QVector<double> x1=solveProgonka(arr,B);
-    QVector<double> x2=solveGauss(arr,B);
+    //QVector<double> x1=solveProgonka(arr,B);
+    //QVector<double> x2=solveGauss(arr,B);
     /*QVector<double> array(10),oldX(10),newX(20),newArray(20);
     array[0]=0;
     newX[0]=oldX[0]=0;

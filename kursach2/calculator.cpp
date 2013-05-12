@@ -138,9 +138,9 @@ QVector<double> Calculator::calculateNewton(QVector<double> oldU,double time,dou
     {
         B[0]=0;
         B[B.size()-1]=0;
-        A=fillYacoby(result,h,t);
+        A=fillYacoby(result,oldU,h,t);
         for (int i=1;i<B.size()-1;i++)
-            B[i]=-fi(oldU,result[i],result[i+1],result[i-1],i,h,t);
+            B[i]=-fi(oldU,result[i],result[i+1],result[i-1],i,h,h,t);
         du=solveGauss(A,B);
         for (int i=0;i<du.size();i++)
             result[i]=result[i]+du[i];
@@ -149,15 +149,15 @@ QVector<double> Calculator::calculateNewton(QVector<double> oldU,double time,dou
     return result;
 }
 
-QVector<double> Calculator::fillYacoby(QVector<double> us,double h, double t)
+QVector<double> Calculator::fillYacoby(QVector<double> us,QVector<double> oldU,double h, double t)
 {
     QVector<double> A(us.size()*us.size());
     A[0]=1;
     for (int i=1;i<us.size()-1;i++)
     {
-        A[i*us.size()+i]=dfdui(us[i],us[i+1],us[i-1],h,t);
-        A[i*us.size()+i+1]=dfduiplus1(us[i],us[i+1],us[i-1],h,t);
-        A[i*us.size()+i-1]=dfduiminus1(us[i],us[i+1],us[i-1],h,t);
+        A[i*us.size()+i]=dfdui(us[i],us[i+1],us[i-1],h,h,t,oldU,i);
+        A[i*us.size()+i+1]=dfduiplus1(us[i],us[i+1],us[i-1],h,h,t,oldU,i);
+        A[i*us.size()+i-1]=dfduiminus1(us[i],us[i+1],us[i-1],h,h,t,oldU,i);
     }
     A[A.size()-1]=1;
     return A;
@@ -242,36 +242,69 @@ QVector<double> Calculator::clarifyU(QVector<double> uTH, QVector<double> uTdiv2
     return clU;
 }
 
-double Calculator::dfdui(double ui, double uiplus1, double uiminus1,double h, double t)
+double Calculator::dfdui(double ui, double uiplus1, double uiminus1,double hi,double hp1, double t,QVector<double> uOld,int i)
 {
 
-    double sigma=2*a*t/pow(2*h,2);                     //2 is for implicide method, without 2 is for Krank-Nikolson;
-    double ksi=2*a*t/(2*h*h);
-    return -1 + 2*ksi*ui*(-3*ui+uiplus1+uiminus1)+sigma*pow(uiplus1-uiminus1,2);
+    double sigma=2*a*t/pow(2*hi,2);                     //2 is for implicide method, without 2 is for Krank-Nikolson;
+    double ksi=2*a*t/(2*hi*hi);
+    //return -1 + 2*ksi*ui*(-3*ui+uiplus1+uiminus1)+sigma*pow(uiplus1-uiminus1,2);
+    double y=uiplus1;
+    double x=ui;
+    double z=uiminus1;
+    double h=hi;
+    double p=hp1;
+    double c=(p+h)/2;
+    /*return a*t*(h*h*(3*x-y)+p*p*(z-3*x))*(h*h*(x-y)+p*p*(z-x))/(2*c*c*h*h*p*p)
+           +
+           a*t*x*(-3*c*x+h*y+p*z)/(c*h*p)
+           -1;*/
+    return 1/(2*c*c*h*h*p*p)*(-2*c*c*h*p*(6*a*t*x*x+h*p)+4*a*c*h*p*t*x*(h*y+p*z)+a*t*(pow(h,4)*(3*x*x-4*x*y+y*y)-2*h*h*p*p*(3*x*x-2*x*(y+z)+y*z)+pow(p,4)*(3*x*x-4*x*z+z*z) ) );
+    double eps=0.000000001;
+    //return (fi(uOld,ui+eps,uiplus1,uiminus1,i,hi,hp1,t)-fi(uOld,ui,uiplus1,uiminus1,i,hi,hp1,t))/eps;
 }
 
-double Calculator::dfduiplus1(double ui,double uiplus1, double uiminus1,double h, double t)
+double Calculator::dfduiplus1(double ui,double uiplus1, double uiminus1,double hi,double hp1, double t,QVector<double> uOld,int i)
 {
-    double sigma=2*a*t/pow(2*h,2);
-    double ksi=2*a*t/(2*h*h);
-    return ui*(ui*ksi+2*sigma*(uiplus1-uiminus1));
+    double sigma=2*a*t/pow(2*hi,2);
+    double ksi=2*a*t/(2*hi*hi);
+    //return ui*(ui*ksi+2*sigma*(uiplus1-uiminus1));
+    double eps=0.0001;
+    return (fi(uOld,ui,uiplus1+eps,uiminus1,i,hi,hp1,t)-fi(uOld,ui,uiplus1,uiminus1,i,hi,hp1,t))/eps;
 }
 
-double Calculator::dfduiminus1(double ui,double uiplus1, double uiminus1,double h, double t)
+double Calculator::dfduiminus1(double ui, double uiplus1, double uiminus1, double hi, double hp1, double t,QVector<double> uOld,int i)
 {
 
-    double sigma=2*a*t/pow(2*h,2);
-    double ksi=2*a*t/(2*h*h);
-    return ui*(ui*ksi+2*sigma*(uiminus1-uiplus1));
+    double sigma=2*a*t/pow(2*hi,2);
+    double ksi=2*a*t/(2*hi*hi);
+    //return ui*(ui*ksi+2*sigma*(uiminus1-uiplus1));
+    double hc=(hp1+hi)/2;
+    double x=ui;
+    double z=uiplus1;
+    double y=uiminus1;
+    double h=hi;
+    double p=hp1;
+    double c=hc;
+    double eps=0.0001;
+    //return (fi(oldU,ui,uiplus1,uiminus1+eps,i,hi,hp1,t)-fi(oldU,ui,uiplus1,uiminus1,i,hi,hp1,t))/eps;
+    //return a*t*x*(c*h*x+h*h*(x-z)+p*p*(y-z))/(c*c*h*h);
+
+    return (fi(uOld,ui,uiplus1,uiminus1+eps,i,hi,hp1,t)-fi(uOld,ui,uiplus1,uiminus1,i,hi,hp1,t))/eps;
+
 }
 
-double Calculator::fi(QVector<double> oldU,double ui, double uiplus1, double uiminus1,int i,double h, double t)
+double Calculator::fi(QVector<double> oldU,double ui, double uiplus1, double uiminus1,int i,double hi,double hp1, double t)
 {
-    double sigma=2*a*t/pow(2.0*h,2);
-    double ksi=2*a*t/(2.0*h*h);
-    return oldU[i]-ui+sigma*ui*pow((uiplus1-uiminus1),2)+ksi*pow(ui,2)*(uiminus1-2*ui+uiplus1);
-            //+sigma*oldU[i]*pow((oldU[i+1]-oldU[i-1]),2)+ksi*pow(oldU[i],2)*(oldU[i-1]-2*oldU[i]+oldU[i+1]);  This string is for Krank-Nikolson
-
+    double hc=(hp1+hi)/2;
+    double dudx=(uiplus1*pow(hi,2)+(pow(hp1,2)-pow(hi,2))*ui - uiminus1*pow(hp1,2))/(2*hc*hp1*hi);
+    double d2udx2=(hp1 * uiminus1 -2 * hc * ui+ hi * uiplus1 ) / ( hc * hi * hp1 );
+    double oldui=oldU[i];
+    return oldui-ui+2*a*t*ui*pow(dudx,2)+a * t * pow(ui,2) * d2udx2;
+    /*uiplus1=y;
+    ui=x;
+    uiminus1=z;
+    hi=c;
+    hp1=b;*/
 }
 
 double Calculator::getAccurateValue(double x, double y)
