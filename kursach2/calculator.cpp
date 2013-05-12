@@ -254,10 +254,6 @@ double Calculator::dfdui(double ui, double uiplus1, double uiminus1,double hi,do
     double h=hi;
     double p=hp1;
     double c=(p+h)/2;
-    /*return a*t*(h*h*(3*x-y)+p*p*(z-3*x))*(h*h*(x-y)+p*p*(z-x))/(2*c*c*h*h*p*p)
-           +
-           a*t*x*(-3*c*x+h*y+p*z)/(c*h*p)
-           -1;*/
     return 1/(2*c*c*h*h*p*p)*(-2*c*c*h*p*(6*a*t*x*x+h*p)+4*a*c*h*p*t*x*(h*y+p*z)+a*t*(pow(h,4)*(3*x*x-4*x*y+y*y)-2*h*h*p*p*(3*x*x-2*x*(y+z)+y*z)+pow(p,4)*(3*x*x-4*x*z+z*z) ) );
     double eps=0.000000001;
     //return (fi(uOld,ui+eps,uiplus1,uiminus1,i,hi,hp1,t)-fi(uOld,ui,uiplus1,uiminus1,i,hi,hp1,t))/eps;
@@ -269,7 +265,14 @@ double Calculator::dfduiplus1(double ui,double uiplus1, double uiminus1,double h
     double ksi=2*a*t/(2*hi*hi);
     //return ui*(ui*ksi+2*sigma*(uiplus1-uiminus1));
     double eps=0.0001;
-    return (fi(uOld,ui,uiplus1+eps,uiminus1,i,hi,hp1,t)-fi(uOld,ui,uiplus1,uiminus1,i,hi,hp1,t))/eps;
+    double y=uiplus1;
+    double x=ui;
+    double z=uiminus1;
+    double h=hi;
+    double p=hp1;
+    double c=(p+h)/2;
+    //return (fi(uOld,ui,uiplus1+eps,uiminus1,i,hi,hp1,t)-fi(uOld,ui,uiplus1,uiminus1,i,hi,hp1,t))/eps;
+    return a*t*x*(p*(c*x+p*(x-z))+h*h*(y-x))/(c*c*p*p);
 }
 
 double Calculator::dfduiminus1(double ui, double uiplus1, double uiminus1, double hi, double hp1, double t,QVector<double> uOld,int i)
@@ -278,19 +281,19 @@ double Calculator::dfduiminus1(double ui, double uiplus1, double uiminus1, doubl
     double sigma=2*a*t/pow(2*hi,2);
     double ksi=2*a*t/(2*hi*hi);
     //return ui*(ui*ksi+2*sigma*(uiminus1-uiplus1));
-    double hc=(hp1+hi)/2;
-    double x=ui;
-    double z=uiplus1;
-    double y=uiminus1;
-    double h=hi;
-    double p=hp1;
-    double c=hc;
+
     double eps=0.0001;
     //return (fi(oldU,ui,uiplus1,uiminus1+eps,i,hi,hp1,t)-fi(oldU,ui,uiplus1,uiminus1,i,hi,hp1,t))/eps;
     //return a*t*x*(c*h*x+h*h*(x-z)+p*p*(y-z))/(c*c*h*h);
+    double y=uiplus1;
+    double x=ui;
+    double z=uiminus1;
+    double h=hi;
+    double p=hp1;
+    double c=(p+h)/2;
 
-    return (fi(uOld,ui,uiplus1,uiminus1+eps,i,hi,hp1,t)-fi(uOld,ui,uiplus1,uiminus1,i,hi,hp1,t))/eps;
-
+    //return (fi(uOld,ui,uiplus1,uiminus1+eps,i,hi,hp1,t)-fi(uOld,ui,uiplus1,uiminus1,i,hi,hp1,t))/eps;
+    return a*t*x*(c*h*x+h*h*(x-y)+p*p*(z-x))/(c*c*h*h);
 }
 
 double Calculator::fi(QVector<double> oldU,double ui, double uiplus1, double uiminus1,int i,double hi,double hp1, double t)
