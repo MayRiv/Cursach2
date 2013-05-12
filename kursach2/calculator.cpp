@@ -54,6 +54,15 @@ void Calculator::calculate()
     QVector<double> oldX;
     QVector<double> uTH;
     QVector<double> uSupport;
+
+    /*QVector<double> xs;
+    xs.push_back(0);
+    xs.push_back(3);
+    xs.push_back(5);                 FOR TEST
+    xs.push_back(20);
+    xs.push_back(40);
+    QVector<double> s=getSteps(xs);*/
+
     while(time<rightBoundary-t)
     {
         time+=t;
@@ -72,7 +81,7 @@ void Calculator::calculate()
         doubleX=getDoubleX(oldX);
 
         uSupport=solveInterpolation(oldX,u.back(),doubleX);
-        uTHdiv2=calculateNewton(uSupport,time,h/2,t,getSteps(oldX));
+        uTHdiv2=calculateNewton(uSupport,time,h/2,t,getSteps(doubleX));
 
         uTdiv2H=calculateNewton(u.back(),time-t/2,h,t/2,getSteps(oldX));
         uTdiv2H=calculateNewton(uTdiv2H,time,h,t/2,getSteps(oldX));
@@ -141,9 +150,9 @@ QVector<double> Calculator::calculateNewton(QVector<double> oldU, double time, d
     {
         B[0]=0;
         B[B.size()-1]=0;
-        A=fillYacoby(result,oldU,h,t);
+        A=fillYacoby(result,oldU,steps,t);
         for (int i=1;i<B.size()-1;i++)
-            B[i]=-fi(oldU,result[i],result[i+1],result[i-1],i,h,h,t);
+            B[i]=-fi(oldU,result[i],result[i+1],result[i-1],i,steps[i-1],steps[i-1],t);
         du=solveGauss(A,B);
         for (int i=0;i<du.size();i++)
             result[i]=result[i]+du[i];
@@ -152,15 +161,15 @@ QVector<double> Calculator::calculateNewton(QVector<double> oldU, double time, d
     return result;
 }
 
-QVector<double> Calculator::fillYacoby(QVector<double> us,QVector<double> oldU,double h, double t)
+QVector<double> Calculator::fillYacoby(QVector<double> us,QVector<double> oldU,QVector<double> h, double t)
 {
     QVector<double> A(us.size()*us.size());
     A[0]=1;
     for (int i=1;i<us.size()-1;i++)
     {
-        A[i*us.size()+i]=dfdui(us[i],us[i+1],us[i-1],h,h,t,oldU,i);
-        A[i*us.size()+i+1]=dfduiplus1(us[i],us[i+1],us[i-1],h,h,t,oldU,i);
-        A[i*us.size()+i-1]=dfduiminus1(us[i],us[i+1],us[i-1],h,h,t,oldU,i);
+        A[i*us.size()+i]=dfdui(us[i],us[i+1],us[i-1],h[i-1],h[i],t,oldU,i);
+        A[i*us.size()+i+1]=dfduiplus1(us[i],us[i+1],us[i-1],h[i-1],h[i],t,oldU,i);
+        A[i*us.size()+i-1]=dfduiminus1(us[i],us[i+1],us[i-1],h[i-1],h[i],t,oldU,i);
     }
     A[A.size()-1]=1;
     return A;
