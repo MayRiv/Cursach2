@@ -19,7 +19,7 @@ public:
 private:
     double getAccurateValue(double x, double y);
     QVector<double> fillYacoby(QVector<double> us, QVector<double> oldU, QVector<double> h, double t);
-    QVector<double> calculateNewton(QVector<double> oldU, double time, double h, double t, QVector<double> steps);
+    QVector<double> calculateNewton(QVector<double> oldU, double time, double t, QVector<double> steps);
     QVector<double> createNewWeb(QVector<double> oldX, QVector<double> bettas, double &h);
     QVector<double> getDoubleX(QVector<double> oldX);
     double getEps (QVector<double> uTH, QVector<double> uTdiv2H, QVector<double> uTHdiv2);

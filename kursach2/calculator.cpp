@@ -79,25 +79,24 @@ void Calculator::calculate()
         doubleX=getDoubleX(oldX);
 
         uSupport=solveInterpolation(oldX,u.back(),doubleX);
-        uTHdiv2=calculateNewton(uSupport,time,h/2,t,getSteps(doubleX));
+        uTHdiv2=calculateNewton(uSupport,time,t,getSteps(doubleX));
 
-        uTdiv2H=calculateNewton(u.back(),time-t/2,h,t/2,getSteps(oldX));
-        uTdiv2H=calculateNewton(uTdiv2H,time,h,t/2,getSteps(oldX));
+        uTdiv2H=calculateNewton(u.back(),time-t/2,t/2,getSteps(oldX));
+        uTdiv2H=calculateNewton(uTdiv2H,time,t/2,getSteps(oldX));
 
-        uTH=calculateNewton(u.back(),time,h,t,getSteps(oldX));
+        uTH=calculateNewton(u.back(),time,t,getSteps(oldX));
 
         double eps=getEps(uTH,uTdiv2H,uTHdiv2);
         if (fabs(eps)>edop )
         {
-            h/=2;
-            if (h<hMin) h=hMin;
+
             time-=t;
             t/=2;
             if (t<tMin) t=tMin;
             QVector<double> supportX=getDoubleX(x.back());
             u.back()=solveInterpolation(x.back(),u.back(),supportX);
             x.back()=supportX;
-
+            _out->stream << "FAIL\n";
         }
         else
         {
@@ -107,13 +106,8 @@ void Calculator::calculate()
 
           x.push_back(createNewWeb(oldX, bettas,h));
           QVector<double> uFitsNewWeb=solveInterpolation(oldX,uClarify,x.back());
-          //u.push_back(uClarify);
           u.push_back(uFitsNewWeb);
-
-
           t*=alpha;
-
-
           double argument=leftBoundary;
           foreach (double value, u.back())
           {
@@ -128,7 +122,7 @@ void Calculator::calculate()
  _out->stream << y.size();
 }
 
-QVector<double> Calculator::calculateNewton(QVector<double> oldU, double time, double h, double t, QVector<double> steps)
+QVector<double> Calculator::calculateNewton(QVector<double> oldU, double time, double t, QVector<double> steps)
 {
     QVector<double> result(oldU.size());
     result=oldU;
