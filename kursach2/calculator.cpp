@@ -19,7 +19,7 @@ Calculator::Calculator(QWidget *parent,Outputter* out, int _nX, int _nT) :
         x[0].push_back(x[0].back()+h);
     a=5;
    // if (t/pow(h,2)>1.0/6) exit(123);
-    edop=0.001;
+    edop=0.01;
     hMax=(rightBoundary-leftBoundary)/4;
     hMin=(rightBoundary-leftBoundary)/1000;
     tMin=(rightBoundary-leftBoundary)/1000;
@@ -58,7 +58,7 @@ void Calculator::calculate()
     /*QVector<double> xs;
     xs.push_back(0);
     xs.push_back(3);
-    xs.push_back(5);                 FOR TEST
+    xs.push_back(5);                 FOR A TEST
     xs.push_back(20);
     xs.push_back(40);
     QVector<double> s=getSteps(xs);*/
@@ -76,8 +76,6 @@ void Calculator::calculate()
         uTH.resize(x.back().size());
 
         oldX=x.back();
-       // QVector<double> betta;
-
         doubleX=getDoubleX(oldX);
 
         uSupport=solveInterpolation(oldX,u.back(),doubleX);
@@ -105,7 +103,7 @@ void Calculator::calculate()
         {
           uClarify=clarifyU(uTH,uTdiv2H,uTHdiv2);
           double alpha;
-          QVector<double> bettas=getCoeffs(uClarify, uTdiv2H,uTHdiv2,h,t,alpha);
+          QVector<double> bettas=getCoeffs(uClarify, uTdiv2H,uTHdiv2,getSteps(x.back()),t,alpha);
 
           x.push_back(createNewWeb(oldX, bettas,h));
           QVector<double> uFitsNewWeb=solveInterpolation(oldX,uClarify,x.back());
@@ -188,24 +186,15 @@ QVector<double> Calculator::createNewWeb(QVector<double> oldX, QVector<double> b
     x[0]=leftBoundary;
     for (int i=1;i<number;i++)
         x[i]=x[i-1]+h;
-    //x.last()=1;//kostul merzkiy                     //vse hernya tyt
     if (h*(number-1)!=rightBoundary) qDebug() << "error in a function create new web";
     if (x.back()!=rightBoundary)
     {
         qDebug() << "error in a function create new web";
-       // exit(4);
     }
-    //return oldX;
     return x;
 }
 QVector<double> Calculator::getDoubleX(QVector<double> oldX)
 {
-   /* QVector<double> newX(oldX.size()*2-1);
-    double h=(rightBoundary-leftBoundary)/(newX.size()-1);
-    newX[0]=leftBoundary;
-    for (int i=1;i<newX.size();i++)
-        newX[i]=newX[i-1]+h;
-    */
     QVector<double> stepsOld=getSteps(oldX);
     QVector<double> stepsNew;
     for (int i=0;i<stepsOld.size();i++)
@@ -232,24 +221,26 @@ double  Calculator::getEps(QVector<double> uTH, QVector<double> uTdiv2H, QVector
     double maxEps=getMax(eps);
     return maxEps;
 }
-QVector<double> Calculator::getCoeffs(QVector<double> uTH, QVector<double> uTdiv2H, QVector<double> uTHdiv2,double h, double t,double& alphaOut)
+QVector<double> Calculator::getCoeffs(QVector<double> uTH, QVector<double> uTdiv2H, QVector<double> uTHdiv2,QVector<double> steps, double t,double& alphaOut)
 {
+    double h=steps[0];
 
-    QVector<double> C1(uTH.size()),C2(uTH.size());
-    for (int i=0;i< uTH.size();i++)
+
+    QVector<double> C1(uTH.size()-2),C2(uTH.size()-2);
+    for (int i=1;i< uTH.size()-1;i++)
     {
-        C1[i]=2.0/pow(t,2)*(uTdiv2H[i]-uTH[i]);
-        C2[i]=4.0/(3.0*h*h*t)*(uTHdiv2[i*2]-uTH[i]);
+        C1[i-1]=2.0/pow(t,2)*(uTdiv2H[i]-uTH[i]);
+        C2[i-1]=4.0/(3.0*h*h*t)*(uTHdiv2[i*2]-uTH[i]);
 
     }
 
-    QVector<double> alphai(uTH.size()),bettai(uTH.size());
-    for (int i=0;i< uTH.size();i++)
+    QVector<double> alphai(uTH.size()-2),bettai(uTH.size()-2);
+    for (int i=1;i< uTH.size()-1;i++)
     {
-        alphai[i]=sqrt(edop/(2*fabs(C1[i])*pow(t,2)));
+        alphai[i-1]=sqrt(edop/(2*fabs(C1[i-1])*pow(t,2)));
     }
     double alpha=getMin(alphai);
-    QVector<double> e1(uTH.size());
+    QVector<double> e1(uTH.size()-2);
     for (int i=0;i<e1.size();i++)
      {
         e1[i]=edop-fabs(C1[i])*pow(alpha*t,2);

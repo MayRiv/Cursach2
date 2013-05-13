@@ -26,7 +26,7 @@ private:
     double getMax(QVector<double> array);
     double getMin(QVector<double> array);
     QVector<double> clarifyU(QVector<double> uTH, QVector<double> uTdiv2H, QVector<double> uTHdiv2);
-    QVector<double> getCoeffs(QVector<double> uTH, QVector<double> uTdiv2H, QVector<double> uTHdiv2,double h, double t,double& alphaOut);
+    QVector<double> getCoeffs(QVector<double> uTH, QVector<double> uTdiv2H, QVector<double> uTHdiv2, QVector<double> steps,double t,double& alphaOut);
     QVector<double> getSteps(QVector<double> x);
     double* methodGauss02(const double* pA,	const double* pB,	int n );
     QVector<double> solveGauss(QVector<double> A, QVector<double> B);
