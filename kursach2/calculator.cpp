@@ -217,14 +217,15 @@ double  Calculator::getEps(QVector<double> uTH, QVector<double> uTdiv2H, QVector
 }
 QVector<double> Calculator::getCoeffs(QVector<double> uTH, QVector<double> uTdiv2H, QVector<double> uTHdiv2,QVector<double> steps, double t,double& alphaOut)
 {
-    double h=steps[0];
-
+    QVector<double> hc(steps.size()-1);
+    for (int i=0;i<hc.size();i++)
+        hc[i]=(steps[i]+steps[i+1])/2.0;
 
     QVector<double> C1(uTH.size()-2),C2(uTH.size()-2);
     for (int i=1;i< uTH.size()-1;i++)
     {
         C1[i-1]=2.0/pow(t,2)*(uTdiv2H[i]-uTH[i]);
-        C2[i-1]=4.0/(3.0*h*h*t)*(uTHdiv2[i*2]-uTH[i]);
+        C2[i-1]=4.0/(3.0*pow(hc[i-1],2)*t)*(uTHdiv2[i*2]-uTH[i]);
 
     }
 
@@ -238,7 +239,7 @@ QVector<double> Calculator::getCoeffs(QVector<double> uTH, QVector<double> uTdiv
     for (int i=0;i<e1.size();i++)
      {
         e1[i]=edop-fabs(C1[i])*pow(alpha*t,2);
-        bettai[i]=1.0/h*sqrt(e1[i]/(alpha*t*fabs(C2[i])));
+        bettai[i]=1.0/hc[i]*sqrt(e1[i]/(alpha*t*fabs(C2[i])));
      }
     alphaOut=alpha;
     return bettai;
