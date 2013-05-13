@@ -104,15 +104,16 @@ void Calculator::calculate()
           double alpha;
           QVector<double> bettas=getCoeffs(uClarify, uTdiv2H,uTHdiv2,getSteps(x.back()),t,alpha);
 
-          x.push_back(createNewWeb(oldX, bettas,h));
+          x.push_back(createNewWeb(oldX, bettas,getSteps(oldX)));
           QVector<double> uFitsNewWeb=solveInterpolation(oldX,uClarify,x.back());
           u.push_back(uFitsNewWeb);
           t*=alpha;
+
           double argument=leftBoundary;
           foreach (double value, u.back())
           {
              _out->stream /*std::cout*/ <<"time is " << time <<" yApp=  " << value <<" yAcc=  " <<getAccurateValue(argument,time) <<" absPoh=  "<< value-getAccurateValue(argument,time)  << " otnPoh=  "<<(value-getAccurateValue(argument,time))/value*100. <<"\n";
-             argument+=h;
+             argument+=getSteps(x.back())[0];//h;
           }
 
          }
@@ -167,11 +168,11 @@ QVector<double> Calculator::fillYacoby(QVector<double> us,QVector<double> oldU,Q
     return A;
 }
 
-QVector<double> Calculator::createNewWeb(QVector<double> oldX, QVector<double> bettas,double& h)
+QVector<double> Calculator::createNewWeb(QVector<double> oldX, QVector<double> bettas, QVector<double> steps)
 {
 
     double betta=getMin(bettas);
-
+    double h=steps[0];
     h*=betta;
     if (h>hMax) h=hMax;
     int number=(rightBoundary-leftBoundary)/h+1;
@@ -226,7 +227,6 @@ QVector<double> Calculator::getCoeffs(QVector<double> uTH, QVector<double> uTdiv
     {
         C1[i-1]=2.0/pow(t,2)*(uTdiv2H[i]-uTH[i]);
         C2[i-1]=4.0/(3.0*pow(hc[i-1],2)*t)*(uTHdiv2[i*2]-uTH[i]);
-
     }
 
     QVector<double> alphai(uTH.size()-2),bettai(uTH.size()-2);
