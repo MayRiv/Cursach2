@@ -35,6 +35,10 @@ private:
     double dfduiplus1(double ui, double uiplu1, double uiminus1, double hi, double hp1, double t, QVector<double> uOld, int i);
     double dfduiminus1(double ui, double uiplus1, double uiminus1, double hi, double hp1, double t, QVector<double> uOld, int i);
     double fi(QVector<double> oldU, double ui, double uiplus1, double uiminus1, int i, double hi, double hp1, double t);
+    double getHDop(QVector<double> oldX, QVector<double> betta, double x);
+    QVector<double> getTestWeb(QVector<double> oldX, QVector<double> betta);
+    QList<double> calc_new_hx_CS(QList<double> oldx, QList<double> BetaI);
+    double h_dop(QList<double> XmasOld, QList<double> Hdp, double x);
     QVector<double> y;//x=space, y=time
     QVector<QVector<double> > z,u,x;//z=accurate, u=approximate
     Ui::Calculator *ui;

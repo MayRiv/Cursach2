@@ -4,6 +4,7 @@
 #include <math.h>
 #include <iostream>
 #include <QDebug>
+using namespace std;
 Calculator::Calculator(QWidget *parent,Outputter* out, int _nX, int _nT) :
     QDialog(parent),
     ui(new Ui::Calculator)
@@ -145,7 +146,7 @@ QVector<double> Calculator::calculateNewton(QVector<double> oldU, double time, d
         B[B.size()-1]=0;
         A=fillYacoby(result,oldU,steps,t);
         for (int i=1;i<B.size()-1;i++)
-            B[i]=-fi(oldU,result[i],result[i+1],result[i-1],i,steps[i-1],steps[i-1],t);
+            B[i]=-fi(oldU,result[i],result[i+1],result[i-1],i,steps[i-1],steps[i],t);     //something weird with steps
         du=solveGauss(A,B);
         for (int i=0;i<du.size();i++)
             result[i]=result[i]+du[i];
@@ -181,11 +182,23 @@ QVector<double> Calculator::createNewWeb(QVector<double> oldX, QVector<double> b
     x[0]=leftBoundary;
     for (int i=1;i<number;i++)
         x[i]=x[i-1]+h;
-    if (h*(number-1)!=rightBoundary) qDebug() << "error in a function create new web";
+    //if (h*(number-1)!=rightBoundary) qDebug() << "error in a function create new web";
     if (x.back()!=rightBoundary)
     {
         qDebug() << "error in a function create new web";
     }
+    //===============================================
+    QList<double> bettaBodnya;
+    bettaBodnya.push_front(0); //for Bodnya's magic
+    for (int i=0;i<bettas.size();i++)
+        bettaBodnya.push_back(bettas[i]);
+    QList<double> xBodnya;
+    for (int i=0;i<oldX.size();i++)
+        xBodnya.push_back(oldX[i]);
+
+    //===============================================
+    //QList<double> test = calc_new_hx_CS(xBodnya,bettaBodnya);
+    //QVector<double> test=getTestWeb(oldX,bettas);
     return x;
 }
 QVector<double> Calculator::getDoubleX(QVector<double> oldX)
@@ -241,6 +254,9 @@ QVector<double> Calculator::getCoeffs(QVector<double> uTH, QVector<double> uTdiv
         e1[i]=edop-fabs(C1[i])*pow(alpha*t,2);
         bettai[i]=1.0/hc[i]*sqrt(e1[i]/(alpha*t*fabs(C2[i])));
      }
+    /*for (int i=0;i< bettai.size();i++)
+        if (bettai[i]>4.0) bettai[i]=4.0;*/
+    if (alpha>4.0) alpha=4.0;
     alphaOut=alpha;
     return bettai;
 }
@@ -521,4 +537,229 @@ QVector<double> Calculator::getSteps(QVector<double> x)
     for (int i=0;i<x.size()-1;i++)
         steps.push_back(x[i+1]-x[i]);
     return steps;
+}
+
+
+
+/*
+QList<double> Calculator::calc_new_hx_CS(QList<double> oldx, QList<double> BetaI)
+{
+    QList<double> smth;
+    int i,j,k1;
+    bool quit,limit;
+    QList<double> XmasOld = oldx;
+    QList<double> XmasNew, HmasNew;
+    double x0,x1,x2,y1,y2,prevstep,step,hr,rjm1,rj,muw,mum,h1,h2,kf;
+    int Nold = XmasOld.size()-1;
+    //{------форм-е начального графика допустимых шагов----}
+    cout << "Hdp starting\n";
+    QList<double>Hdp;
+    Hdp.append(XmasOld[1]-XmasOld[0]);
+    for (int i=1;i<BetaI.size();i++)
+    {
+        Hdp.append(BetaI[i] * ((XmasOld[i+1]-XmasOld[i-1])/2.0) );
+    }
+    Hdp.append(XmasOld[Nold]-XmasOld[Nold-1]);
+    cout << "hdp cacled\n";
+    cout<<"HDP: ";
+    for (int i=0;i<Hdp.size();i++)
+        cout << Hdp[i] << " ";
+    cout<<"\n";
+
+    //{------корр-ка графика допустимых шагов----}
+    muw=1.4; mum=0.7;
+    for (int i=1;i<=Nold-1;i++)
+    {
+        h1=Hdp[i-1]; h2=Hdp[i]; kf=h2/h1;
+        if (h2>=h1)
+        {
+            if (kf>muw) Hdp[i]=h1*muw;
+        }
+        else
+        {
+            if (kf<mum)
+            {
+                 Hdp[i-1]=h2/mum;
+                 for (int j=i-1;j>=1;j--)
+                 {
+                      h1=Hdp[j-1]; h2=Hdp[j]; kf=h2/h1;
+                      if (h2>=h1)
+                      {
+                         if (kf>muw) Hdp[j]=h1*muw;
+                      }
+                      else
+                      {
+                         if (kf<mum) Hdp[j-1]=h2/mum;
+                      }
+                 } //{of j};
+            } //{движения назад};
+        }//{ убывающей ф-ии};
+    }//{движения вперед};
+
+    cout<<"HDP (corrected): ";
+    for (int i=0;i<Hdp.size();i++)
+        cout << Hdp[i] << " ";
+    cout<<"\n";
+
+    //{------построение новой сетки----}
+    XmasNew.append(XmasOld[0]);
+    i = 0; j = 1;
+    quit = false;//{quit=1,когда сетка вся построена}
+    do
+    {//{цикл по j,т.е. по всем  новым узлам сетки,выход- по quit}
+        x1=XmasNew[j-1]; y1=h_dop(XmasOld,Hdp,x1); x0=x1;
+        limit=false;//{limit=1,если очередной шаг построен}
+        do
+        {//{цикл по i,т.е.по малым отрезкам [x1,x2], выход- по limit}
+            x2=XmasOld[i+1]; y2=h_dop(XmasOld,Hdp,x2);
+            if (y2>y1) y2=y1;
+            if (y2<=(x2-x0))
+            {
+            //{-----------------корень найден------------------}
+                 step=(x0+y1-(y2-y1)/(x2-x1)*x1)/(1-(y2-y1)/(x2-x1))-x0;
+                 if (step<hMin) step=hMin;
+                 if (step>hMax) step=hMax;
+                 if (j>1)
+                 {
+                     prevstep=(XmasNew[j - 1] - XmasNew[j - 2]);
+                     hr=step/prevstep;
+                     if (hr>muw) step=prevstep*muw;
+                     else if (hr<mum) step=prevstep*mum;
+                 }
+                 if (step<hMin) step=hMin;
+                 if (step>hMax) step=hMax;
+                 HmasNew.append(step);
+                 XmasNew.append(leftBoundary+step); limit=true;
+                 j=j+1;
+            }
+            else if (i==Nold-1)
+            { //{----последний шаг--------}
+                cout << "последний шаг\n";
+                 step=y2; HmasNew.append(step); XmasNew.append(x0+step);
+                 limit=true; quit=true;
+            }
+            else
+            {  // {------следующий малый отрезок-----------}
+                x1=x2; y1=y2; i=i+1;
+                cout << "следующий малый отрезок. x1 = "<<x1<<"; y1 = "<<y1<<";i = "<<i<<";Nold = "<<Nold<<"\n";
+            }
+        } while (limit!=true);
+    } while (quit!=true);
+
+#define DEBUG_STEP
+#ifdef DEBUG_STEP
+    cout << "вычисления закончены\n";
+#endif
+    QList <double> newh = HmasNew;
+    QList <double> newx = XmasNew;
+
+    cout << "j = "<<j<<"; XmasNew size-1 = "<<XmasNew.size()-1<<"\n";
+    cout << "Hmasnew size-1 = "<<HmasNew.size()-1<<"\n";
+    double LimitX = XmasOld.last();
+    cout << "old lastx = "<< XmasOld.last()<<"\n";
+
+    newh.clear();
+    for (int i=0;i<newx.size()-1;i++)
+        newh.append(newx[i+1] - newx[i]);
+    if (fabs(newx.last() - rightBoundary) > 0.00001)
+    {
+#ifdef DEBUG_STEP
+        cout << "превышена черта xn. РАСЧЕТ ЛЯМБДА\n";
+#endif
+        double lambda = rightBoundary / newx.last();
+#ifdef DEBUG_STEP
+        cout << "ЛЯМБДА = " << lambda << '\n';
+        cout << "замена шагов\n";
+        cout << "старые: ";
+        for (int k=0;k<newh.size();k++) cout << newh[k] << ' ';
+        cout << '\n';
+#endif
+        for (int k=0;k<newh.size();k++)
+            newh[k] *= lambda;
+#ifdef DEBUG_STEP
+        cout << "новые : ";
+        for (int k=0;k<newh.size();k++) cout << newh[k] << ' ';
+        cout << '\n';
+
+
+        cout << "замена исков\n";
+        cout << "старые: ";
+        for (int k=0;k<newx.size();k++) cout << newx[k] << ' ';
+        cout << '\n';
+#endif
+        for (int k=0;k<newx.size()-1;k++)
+            newx[k+1] = newx[k] + newh[k];
+
+#ifdef DEBUG_STEP
+        cout << "новые : ";
+        for (int k=0;k<newx.size();k++) cout << newx[k] << ' ';
+        cout << '\n';
+#endif
+    }
+
+    QList<double> *result = new QList<double>;
+    *result = newh;
+    return *result;
+}
+*/
+double Calculator::h_dop(QList<double> XmasOld, QList<double> Hdp, double x)
+{
+    int i;
+    double res;
+    bool quit;
+
+    cout << "x = " << x << "\n";
+
+    int Nold = XmasOld.size()-1;
+    quit=false;
+    i=0;
+    while ((!quit) && (i<Nold))
+    {
+       if ((x>=XmasOld[i]) && (x<=XmasOld[i+1]))
+       {
+          quit=true;
+          res=Hdp[i]+(x-XmasOld[i])/(XmasOld[i+1]-XmasOld[i])*(Hdp[i+1]-Hdp[i]);
+       }
+       i=i+1;
+    }
+    if (res<hMin) res=hMin;
+    if (res>hMax) res=hMax;
+    return res;
+
+}
+double Calculator::getHDop(QVector<double> oldX, QVector<double> betta, double x)
+{
+    QVector<double> steps=getSteps(oldX);
+
+    if (x<leftBoundary+oldX[1])  return betta[0]*(steps[0]+steps[1])/2;
+    if (x>rightBoundary-oldX[oldX.size()-2]) return betta.back()*(steps[steps.size()-2]+steps.back())/2;
+    int i=1;
+    while (!(x>oldX[i]&&x<oldX[i+1]))
+        i++;
+    return betta[i]*(steps[i]+steps[i+1])/2  +  (x-oldX[i])/steps[i+1]*(betta[i+1] * (steps[i+1]+steps[i+2])/2 -betta[i]*(steps[i]+steps[i+1])/2 );
+}
+QVector<double> Calculator::getTestWeb(QVector<double> oldX, QVector<double> betta)
+{
+    double dx=0.000005;
+    double hMin=getHDop(oldX,betta,0.0);
+    QVector<double> hNew;
+    double sum=0;
+    double xNew=0;
+    double x=0;
+
+    int j=1;
+    while(sum<rightBoundary)
+    {
+        double hDop=getHDop(oldX,betta,x);
+        if (hDop<hMin) hMin=hDop;
+        if (x-xNew>hMin)
+        {
+            hNew.push_back(x-xNew);
+            sum+=x-xNew;
+            xNew=x-dx;
+            j++;
+        }
+        x+=dx;
+    }
+    return hNew;
 }
