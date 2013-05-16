@@ -80,7 +80,7 @@ void Calculator::calculate()
         doubleX=getDoubleX(oldX);
 
         uSupport=solveInterpolation(oldX,u.back(),doubleX);
-        uTHdiv2=calculateNewton(uSupport,time,t,getSteps(doubleX));
+        uTHdiv2=calculateNewton(uSupport,time,t,getSteps(doubleX)); //something wrong here.
 
         uTdiv2H=calculateNewton(u.back(),time-t/2,t/2,getSteps(oldX));
         uTdiv2H=calculateNewton(uTdiv2H,time,t/2,getSteps(oldX));
@@ -198,8 +198,14 @@ QVector<double> Calculator::createNewWeb(QVector<double> oldX, QVector<double> b
 
     //===============================================
     //QList<double> test = calc_new_hx_CS(xBodnya,bettaBodnya);
-    //QVector<double> test=getTestWeb(oldX,bettas);
-    return x;
+    QVector<double> test=getTestWeb(oldX,bettas);
+    QVector<double> xTest(test.size()+1);
+    xTest[0]=leftBoundary;
+    for (int i=1;i<test.size()+1;i++)
+    {
+        xTest[i]=xTest[i-1]+test[i-1];
+    }
+    return xTest;
 }
 QVector<double> Calculator::getDoubleX(QVector<double> oldX)
 {
@@ -340,8 +346,8 @@ double Calculator::fi(QVector<double> oldU,double ui, double uiplus1, double uim
 double Calculator::getAccurateValue(double x, double y)
 {
     double B;
-    double A=B=3;
-    //B=0.7;
+    double A=3;
+    B=1.1;
     return pow(pow((x-A),2)/(4*a*(B-y)),1.0/2);
 
 }
@@ -732,15 +738,22 @@ double Calculator::getHDop(QVector<double> oldX, QVector<double> betta, double x
     QVector<double> steps=getSteps(oldX);
 
     if (x<leftBoundary+oldX[1])  return betta[0]*(steps[0]+steps[1])/2;
-    if (x>rightBoundary-oldX[oldX.size()-2]) return betta.back()*(steps[steps.size()-2]+steps.back())/2;
+    if (x>rightBoundary-steps.back()/*oldX[oldX.size()-2]*/) return betta.back()*(steps[steps.size()-2]+steps.back())/2;
     int i=1;
-    while (!(x>oldX[i]&&x<oldX[i+1]))
+    bool test=!(x>oldX[i]&&x<oldX[i+1]);
+    while (!(x>oldX[i]&&x<oldX[i+1])&&i<steps.size()-3)
+    {
         i++;
-    return betta[i]*(steps[i]+steps[i+1])/2  +  (x-oldX[i])/steps[i+1]*(betta[i+1] * (steps[i+1]+steps[i+2])/2 -betta[i]*(steps[i]+steps[i+1])/2 );
+        if (i==steps.size()-2) exit(43);
+    }
+    double hDop= betta[i]*(steps[i]+steps[i+1])/2  +  (x-oldX[i])/steps[i+1]*(betta[i+1] * (steps[i+1]+steps[i+2])/2 -betta[i]*(steps[i]+steps[i+1])/2 );
+    if (hDop>hMax) hDop=hMax;
+    if (hDop<hMin) hDop=hMin;
+    return hDop;
 }
 QVector<double> Calculator::getTestWeb(QVector<double> oldX, QVector<double> betta)
 {
-    double dx=0.000005;
+    double dx=0.005;
     double hMin=getHDop(oldX,betta,0.0);
     QVector<double> hNew;
     double sum=0;
@@ -761,5 +774,9 @@ QVector<double> Calculator::getTestWeb(QVector<double> oldX, QVector<double> bet
         }
         x+=dx;
     }
+    double sum1=0;
+    foreach (double el, hNew)
+        sum1+=el;
+
     return hNew;
 }
