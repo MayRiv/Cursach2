@@ -55,22 +55,22 @@ void Calculator::calculate()
     QVector<double> uTH;
     QVector<double> uSupport;
 
-    /*QVector<double> xs;
+    QVector<double> xs;
     xs.push_back(0);
     xs.push_back(3);
-    xs.push_back(5);                 FOR A TEST
+    xs.push_back(5);                // FOR A TEST
     xs.push_back(20);
     xs.push_back(40);
-    QVector<double> s=getSteps(xs);*/
+    QVector<double> s=getSteps(xs);
 
     while(time<rightBoundary-t)
     {
         time+=t;
-        y.push_back(time);
+        y.push_back(time);//should push only if step is accessed.
         z.push_back((QVector<double>)0);
-        for (int i=0;i<x[0].size();i++)
+        for (int i=0;i<x.back().size();i++)
         {
-            z.back().push_back(getAccurateValue(x[0][i],time));
+            z.back().push_back(getAccurateValue(x.back()[i],time));
         }
 
         uTH.resize(x.back().size());
@@ -78,14 +78,14 @@ void Calculator::calculate()
         oldX=x.back();
         doubleX=getDoubleX(oldX);
 
-        uSupport=solveInterpolation(oldX,u.back(),doubleX);
+        uSupport=solveInterpolation1(oldX,u.back(),doubleX);
         uTHdiv2=calculateNewton(uSupport,time,t,getSteps(doubleX));
 
         uTdiv2H=calculateNewton(u.back(),time-t/2,t/2,getSteps(oldX));
         uTdiv2H=calculateNewton(uTdiv2H,time,t/2,getSteps(oldX));
 
         uTH=calculateNewton(u.back(),time,t,getSteps(oldX));
-
+        QVector<double> testSteps=getSteps(oldX);
         double eps=getEps(uTH,uTdiv2H,uTHdiv2);
         if (fabs(eps)>edop )
         {
@@ -94,7 +94,7 @@ void Calculator::calculate()
             t/=2;
             if (t<tMin) t=tMin;
             QVector<double> supportX=getDoubleX(x.back());
-            u.back()=solveInterpolation(x.back(),u.back(),supportX);
+            u.back()=solveInterpolation1(x.back(),u.back(),supportX);
             x.back()=supportX;
             _out->stream << "FAIL\n";
         }
@@ -105,22 +105,30 @@ void Calculator::calculate()
           QVector<double> bettas=getCoeffs(uClarify, uTdiv2H,uTHdiv2,getSteps(x.back()),t,alpha);
 
           x.push_back(createNewWeb(oldX, bettas,getSteps(oldX)));
-          QVector<double> uFitsNewWeb=solveInterpolation(oldX,uClarify,x.back());
+          QVector<double> uFitsNewWeb=solveInterpolation1(oldX,uClarify,x.back());
           u.push_back(uFitsNewWeb);
+          double tAcc=t;
           t*=alpha;
 
-          double argument=leftBoundary;
+          /*double argument=leftBoundary;
           foreach (double value, u.back())
           {
-             _out->stream /*std::cout*/ <<"time is " << time <<" yApp=  " << value <<" yAcc=  " <<getAccurateValue(argument,time) <<" absPoh=  "<< value-getAccurateValue(argument,time)  << " otnPoh=  "<<(value-getAccurateValue(argument,time))/value*100. <<"\n";
+             _out->stream  <<"time is " << time <<" yApp=  " << value <<" yAcc=  " <<getAccurateValue(argument,time) <<" absPoh=  "<< value-getAccurateValue(argument,time)  << " otnPoh=  "<<(value-getAccurateValue(argument,time))/value*100. <<"\n";
              argument+=getSteps(x.back())[0];//h;
+          }*/
+          QVector<double> accValue(u.back().size());
+          for (int i=0;i<accValue.size();i++)
+              accValue[i]=getAccurateValue(x.back()[i],tAcc);
+          for (int i=0;i<uClarify.size();i++)
+          {
+              _out->stream <<"time is " << time <<" yApp=  " << uClarify[i] <<" yAcc=  " <<z.back()[i] <<" absPoh=  "<< uClarify[i]-z.back()[i]  << " otnPoh=  "<<(uClarify[i]-z.back()[i])/uClarify[i]*100. <<"\n";
           }
 
          }
          _out->stream << "\n";
 
     }
- _out->stream << y.size();
+    _out->stream << x.size();
 }
 
 QVector<double> Calculator::calculateNewton(QVector<double> oldU, double time, double t, QVector<double> steps)
@@ -145,7 +153,7 @@ QVector<double> Calculator::calculateNewton(QVector<double> oldU, double time, d
         B[B.size()-1]=0;
         A=fillYacoby(result,oldU,steps,t);
         for (int i=1;i<B.size()-1;i++)
-            B[i]=-fi(oldU,result[i],result[i+1],result[i-1],i,steps[i-1],steps[i-1],t);
+            B[i]=-fi(oldU,result[i],result[i+1],result[i-1],i,steps[i-1],steps[i],t);
         du=solveGauss(A,B);
         for (int i=0;i<du.size();i++)
             result[i]=result[i]+du[i];
@@ -186,7 +194,9 @@ QVector<double> Calculator::createNewWeb(QVector<double> oldX, QVector<double> b
     {
         qDebug() << "error in a function create new web";
     }
-    return x;
+    QVector<double> testWeb=getTestWeb(oldX,bettas);
+    return testWeb;
+    //return x;
 }
 QVector<double> Calculator::getDoubleX(QVector<double> oldX)
 {
@@ -241,6 +251,8 @@ QVector<double> Calculator::getCoeffs(QVector<double> uTH, QVector<double> uTdiv
         e1[i]=edop-fabs(C1[i])*pow(alpha*t,2);
         bettai[i]=1.0/hc[i]*sqrt(e1[i]/(alpha*t*fabs(C2[i])));
      }
+    for (int i=0;i<bettai.size();i++)
+        if (bettai[i]>4) bettai[i]=4;
     alphaOut=alpha;
     return bettai;
 }
@@ -325,7 +337,8 @@ double Calculator::getAccurateValue(double x, double y)
 {
     double B;
     double A=B=3;
-    //B=0.7;
+    B=1.1;
+    //B=2;
     return pow(pow((x-A),2)/(4*a*(B-y)),1.0/2);
 
 }
@@ -521,4 +534,71 @@ QVector<double> Calculator::getSteps(QVector<double> x)
     for (int i=0;i<x.size()-1;i++)
         steps.push_back(x[i+1]-x[i]);
     return steps;
+}
+QVector<double> Calculator::solveInterpolation1(QVector<double> oldX, QVector<double> oldY, QVector<double> xNew)
+{
+    QVector<double> y;
+    foreach (double x, xNew)
+    {
+        int i=0;
+        if (x>oldX.back()) i=oldX.size()-2;
+        while(x>oldX[i]&&x<oldX.back())
+            if (x<oldX[i+1]) break;
+            else i++;
+        y.push_back((x*oldY[i]-x*oldY[i+1]+oldX[i]*oldY[i+1]-oldX[i+1]*oldY[i])/(oldX[i]-oldX[i+1]));
+    }
+    return y;
+}
+QVector<double> Calculator::getTestWeb(QVector<double> oldX, QVector<double> betta)
+{
+    double dx=0.005;
+    double hMin=getHDop(oldX,betta,0.0);
+    QVector<double> hNew;
+    double sum=0;
+    double xNew=0;
+    double x=0;
+
+    int j=1;
+    while(sum<rightBoundary)
+    {
+        double hDop=getHDop(oldX,betta,x);
+        if (hDop<hMin) hMin=hDop;
+        if (x-xNew>/*hDop*/hMin) //both variants work, but one of them works better than another.b
+        {
+            hNew.push_back(x-xNew);
+            sum+=x-xNew;
+            xNew=x-dx;
+            j++;
+        }
+        x+=dx;
+    }
+    double sum1=0;
+    foreach (double el, hNew)
+        sum1+=el;
+    QVector<double> xTest;
+    xTest.push_back(leftBoundary);
+    foreach(double h, hNew)
+        xTest.push_back(xTest.back()+h);
+    //return hNew;
+    xTest.back()=rightBoundary;
+    return xTest;
+}
+double Calculator::getHDop(QVector<double> oldX, QVector<double> betta, double x)
+{
+    QVector<double> steps=getSteps(oldX);
+
+    if (x<leftBoundary+oldX[1])  return betta[0]*(steps[0]+steps[1])/2;
+    if (x>rightBoundary-steps.back()/*oldX[oldX.size()-2]*/) return betta.back()*(steps[steps.size()-2]+steps.back())/2;
+    int i=1;
+    bool test=!(x>oldX[i]&&x<oldX[i+1]);
+    while (!(x>oldX[i]&&x<oldX[i+1])&&i<steps.size()-3)
+    {
+        i++;
+        if (i==steps.size()-2) exit(43);
+    }
+    //double hDop= betta[i]*(steps[i]+steps[i+1])/2  +  (x-oldX[i])/steps[i+1]*(betta[i+1] * (steps[i+1]+steps[i+2])/2 -betta[i]*(steps[i]+steps[i+1])/2);
+    double hDop= betta[i-1]*(steps[i]+steps[i+1])/2  +  (x-oldX[i])/steps[i+1]*(betta[i] * (steps[i+1]+steps[i+2])/2 -betta[i-1]*(steps[i]+steps[i+1])/2);
+    if (hDop>hMax) hDop=hMax;
+    if (hDop<hMin) hDop=hMin;
+    return hDop;
 }

@@ -31,10 +31,13 @@ private:
     double* methodGauss02(const double* pA,	const double* pB,	int n );
     QVector<double> solveGauss(QVector<double> A, QVector<double> B);
     QVector<double> solveInterpolation(QVector<double> xOld, QVector<double> yOld, QVector<double> xNew);
+    QVector<double> solveInterpolation1(QVector<double> oldX, QVector<double> oldY, QVector<double> xNew);
     double dfdui(double ui, double uiplus1, double uiminus1, double hi, double hp1, double t, QVector<double> uOld, int i);
     double dfduiplus1(double ui, double uiplu1, double uiminus1, double hi, double hp1, double t, QVector<double> uOld, int i);
     double dfduiminus1(double ui, double uiplus1, double uiminus1, double hi, double hp1, double t, QVector<double> uOld, int i);
     double fi(QVector<double> oldU, double ui, double uiplus1, double uiminus1, int i, double hi, double hp1, double t);
+    double getHDop(QVector<double> oldX, QVector<double> betta, double x);
+    QVector<double> getTestWeb(QVector<double> oldX, QVector<double> betta);
     QVector<double> y;//x=space, y=time
     QVector<QVector<double> > z,u,x;//z=accurate, u=approximate
     Ui::Calculator *ui;
