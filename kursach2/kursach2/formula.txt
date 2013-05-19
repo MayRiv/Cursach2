@@ -1,0 +1,50 @@
+oldui-ui+2*a*t*ui*pow((uiplus1*pow(hi,2)+(pow(hp1,2)-pow(hi,2))*ui - uiminus1*pow(hp1,2))/(2*hc*hp1*hi),2)+a * t * pow(ui,2) * (hp1 * uiminus1 -2 * hc * ui+ hi * uiplus1 ) / ( hc * hi * hp1 )
+
+
+d(2*a*t*x*pow(k*(y*pow(a,2) + (pow(b,2)-pow(a,2) )*x-z*pow(b,2)),2))/dx
+
+
+
+
+2*hi*k*t*(-2*hc*ui*ui + 2*ui*(-2*hc*ui+ hi*uiplus1 + hp1*uiminus) + 2*(hi*hi - hp1*hp1)*k*ui*(hi*hi* (ui - uiplus1) + hip1*hp1* (-ui + uiminus1)) + k*pow((hi*hi*(ui - uiminus) + hp1*hp1* (-ui + uiminus1)),2))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+y=uiplus1
+x=ui
+z=uiminus1
+hi=h
+hp1=p
+hc=c
+
+d(2*a*t*x*((y*pow(h,2)+(pow(p,2)-pow(h,2))*x - z*pow(p,2))/(2*c*p*h))^2)/dx
+=
+a*t*(h*h*(3*x-y)+p*p*(z-3*x))*(h*h*(x-y)+p*p*(z-x))/(2*c*c*h*h*p*p)
+
+d(a*t*x*x*(p * z -2*c*x+ h * y )/( c * h * p))/dx
+=
+a*t*x*(-3*c*x+h*y+p*z)/(c*h*p)
+
+
