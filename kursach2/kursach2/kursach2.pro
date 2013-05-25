@@ -13,12 +13,14 @@ TEMPLATE = app
 SOURCES += main.cpp\
         calculator.cpp \
     qfunc3d.cpp \
-    outputter.cpp
+    outputter.cpp \
+    widget.cpp
 
 HEADERS  += calculator.h \
     qfunc3d.h \
     outputter.h \
-    triplet.h
+    triplet.h \
+    widget.h
 
 
 FORMS    += calculator.ui

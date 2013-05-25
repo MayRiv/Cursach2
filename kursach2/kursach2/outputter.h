@@ -25,6 +25,7 @@ public:
     void addGraph(QVector<double> x,QVector<double>  y,int tabNumber,QColor color);
     void addGraph(double* x, double* y, int numberOfElements, int tabNumber, QColor color);
     void addGraph(QVector<double> x,QVector<double> y, QVector<double> z,int tabNumber);
+    void addGraph(QVector<double> x, QVector<double> y, QVector<QVector <double> > z, int tabNumber);
     void view();
     void printf(QString string);
     QTextStream stream;

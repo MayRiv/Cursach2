@@ -4,6 +4,7 @@
 #include "calculator.h"
 #include <QDialog>
 #include "outputter.h"
+#include "widget.h"
 double* methodGauss02(const double* pA,	const double* pB,	int n );
 QVector<double> solveGauss(QVector<double> A, QVector<double> B);
 QVector<double> solveProgonka(QVector<double> A, QVector<double> B);
@@ -15,37 +16,16 @@ int main(int argc, char *argv[])
     Outputter out;
     QDialog dialog;
     Calculator calculator(&dialog,&out,60,200);
-    calculator.calculate();
-    calculator.show();
-    double A[16]={
-        11,12, 0, 0,
-        21,22,23, 0,
-        0 ,32,33,34,
-        0 ,0 ,43,44
-    };
-    QVector<double> arr(16);
-    for (int i=0;i<16;++i)
-        arr[i]=A[i];
-    QVector<double> B(4);
-    for (int i=0;i<4;i++)
-        B[i]=i*i;
-    //QVector<double> x1=solveProgonka(arr,B);
-    //QVector<double> x2=solveGauss(arr,B);
-    /*QVector<double> array(10),oldX(10),newX(20),newArray(20);
-    array[0]=0;
-    newX[0]=oldX[0]=0;
-    double h=1.0/(10.0-1);
-    int i;
-    for (i=1;i<10;i++)
-    {
-        oldX[i]=oldX[i-1]+h;
-        array[i]=sin(oldX[i]);
-    }
-    h/=2;
-    for (int j=1;j<20;j++)
-        newX[j]=newX[j-1]+h;
-    newArray=solveInterpolation(oldX,array,newX);
-    */
+    //calculator.calculateImplicit();
+    calculator.calculateExplicit();
+    //calculator.show();
+    widget *webShower=new widget(&dialog);
+    webShower->setWeb(calculator.getX(),calculator.getTime());
+    dialog.show();
+
+
+
+
     out.view();
     out.show();
     return app.exec();

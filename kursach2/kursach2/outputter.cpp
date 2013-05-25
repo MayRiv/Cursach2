@@ -120,3 +120,11 @@ void Outputter::printf(QString string)
 {
     ui->plainTextEdit->setPlainText(string);
 }
+void Outputter::addGraph(QVector<double> x, QVector<double> y, QVector<QVector <double> > z, int tabNumber)
+{
+    QVector<double> A;
+    foreach(QVector<double> vector,z)
+        foreach(double value, vector)
+            A.push_back(value);
+    addGraph(x,y,A,tabNumber);
+}

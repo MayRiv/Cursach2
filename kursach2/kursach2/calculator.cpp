@@ -27,13 +27,12 @@ Calculator::Calculator(QWidget *parent,Outputter* out, int _nX, int _nT) :
     nX=_nX;
     nT=_nT;
 }
-
 Calculator::~Calculator()
 {
     delete ui;
 }
 
-void Calculator::calculate()
+void Calculator::calculateImplicit()
 {
     double t=(rightBoundary-leftBoundary)/(nT-1);
     double h=(rightBoundary-leftBoundary)/(nX-1);
@@ -97,38 +96,56 @@ void Calculator::calculate()
             u.back()=solveInterpolation1(x.back(),u.back(),supportX);
             x.back()=supportX;
             _out->stream << "FAIL\n";
+            y.pop_back();
+            z.pop_back();
         }
         else
         {
           uClarify=clarifyU(uTH,uTdiv2H,uTHdiv2);
           double alpha;
           QVector<double> bettas=getCoeffs(uClarify, uTdiv2H,uTHdiv2,getSteps(x.back()),t,alpha);
-
+          QVector<double> Web=x.back();
           x.push_back(createNewWeb(oldX, bettas,getSteps(oldX)));
           QVector<double> uFitsNewWeb=solveInterpolation1(oldX,uClarify,x.back());
           u.push_back(uFitsNewWeb);
           double tAcc=t;
           t*=alpha;
 
-          /*double argument=leftBoundary;
-          foreach (double value, u.back())
-          {
-             _out->stream  <<"time is " << time <<" yApp=  " << value <<" yAcc=  " <<getAccurateValue(argument,time) <<" absPoh=  "<< value-getAccurateValue(argument,time)  << " otnPoh=  "<<(value-getAccurateValue(argument,time))/value*100. <<"\n";
-             argument+=getSteps(x.back())[0];//h;
-          }*/
           QVector<double> accValue(u.back().size());
           for (int i=0;i<accValue.size();i++)
               accValue[i]=getAccurateValue(x.back()[i],tAcc);
+          _out->stream << "Layer numer " << y.size() <<endl;
+          double maxEps=0;
           for (int i=0;i<uClarify.size();i++)
           {
-              _out->stream <<"time is " << time <<" yApp=  " << uClarify[i] <<" yAcc=  " <<z.back()[i] <<" absPoh=  "<< uClarify[i]-z.back()[i]  << " otnPoh=  "<<(uClarify[i]-z.back()[i])/uClarify[i]*100. <<"\n";
-          }
+              double eps=(uClarify[i]-z.back()[i])/uClarify[i]*100.;
+              if (eps>maxEps) maxEps=eps;
+              _out->stream <<"time is " << time <<" X is "<< Web[i] <<" yApp=  " << uClarify[i] <<" yAcc=  " <<z.back()[i] <<" absPoh=  "<< uClarify[i]-z.back()[i]  << " otnPoh=  "<<eps <<"\n";
 
+          }
+          _out->stream << "max eps is "<<maxEps<<endl;
          }
          _out->stream << "\n";
 
     }
-    _out->stream << x.size();
+    _out->stream <<"There are "<< x.size() <<" layers at all";
+
+
+    int max=0;
+    int index=0;
+    for (int i=0;i<x.size();i++)
+        if (x[i].size()>max)
+        {
+            max=x[i].size();
+            index=i;
+        }
+
+    QVector<QVector<double> > iValues(u.size());
+    for (int i=0;i<u.size();i++)
+        iValues[i]=solveInterpolation1(x[i],u[i],x[index]);
+
+    _out->addGraph(x[index],y,iValues,1);
+
 }
 
 QVector<double> Calculator::calculateNewton(QVector<double> oldU, double time, double t, QVector<double> steps)
@@ -189,11 +206,6 @@ QVector<double> Calculator::createNewWeb(QVector<double> oldX, QVector<double> b
     x[0]=leftBoundary;
     for (int i=1;i<number;i++)
         x[i]=x[i-1]+h;
-    if (h*(number-1)!=rightBoundary) qDebug() << "error in a function create new web";
-    if (x.back()!=rightBoundary)
-    {
-        qDebug() << "error in a function create new web";
-    }
     QVector<double> testWeb=getTestWeb(oldX,bettas);
     return testWeb;
     //return x;
@@ -563,7 +575,7 @@ QVector<double> Calculator::getTestWeb(QVector<double> oldX, QVector<double> bet
     {
         double hDop=getHDop(oldX,betta,x);
         if (hDop<hMin) hMin=hDop;
-        if (x-xNew>/*hDop*/hMin) //both variants work, but one of them works better than another.b
+        if (x-xNew>hDop/*hMin*/) //both variants work, but one of them works better than another
         {
             hNew.push_back(x-xNew);
             sum+=x-xNew;
@@ -601,4 +613,59 @@ double Calculator::getHDop(QVector<double> oldX, QVector<double> betta, double x
     if (hDop>hMax) hDop=hMax;
     if (hDop<hMin) hDop=hMin;
     return hDop;
+}
+
+void Calculator::calculateExplicit()
+{
+    int nX=5;
+    double h=(1.0-0.0)/(nX-1);
+    x.pop_back();
+    x.push_back((QVector<double>)0);
+   x[0].push_back(0);
+   for (int i=1;i<nX;i++)
+       x[0].push_back(x[0].back()+h);
+   int nT=100;
+   double t=(1.0-0.0)/(nT-1);
+   y.push_back(0);
+   for (int i=1;i<nT;i++)
+      y.push_back(y.back()+t);
+
+    u.push_back((QVector<double>)0);
+    z.push_back((QVector<double>)0);
+    foreach(double node,x.back())
+    {
+        u[0].push_back(getAccurateValue(node,0));
+        z[0].push_back(getAccurateValue(node,0));
+    }
+
+    for (int j=1;j<y.size();j++)
+    {
+        u.push_back((QVector<double>)0);
+        z.push_back((QVector<double>)0);
+        x.push_back((QVector<double>)0);
+        x.back()=x[0];
+        for (int i=0;i<x[0].size();i++)
+        {
+            u[j].push_back(0);
+            z[j].push_back(getAccurateValue(x[0][i],y[j]));
+        }
+
+
+        u[j][0]=getAccurateValue(0,y[j]);                     //Краевые
+        u[j][x.back().size()-1]=getAccurateValue(x.back().back(),y[j]);    //Условия
+        for (int i=1;i<x.back().size()-1;i++)
+        {
+            double dudx=(u[j-1][i+1]-u[j-1][i-1])/(2*h);
+            double d2udx2=(u[j-1][i-1]-2*u[j-1][i]+u[j-1][i+1])/pow(h,2.0);
+            u[j][i]=u[j-1][i]+t*a*(2*u[j-1][i]*dudx*dudx+pow(u[j-1][i],2)*d2udx2);
+            double eps=(u[j][i]-z[j][i])/u[j][i]*100;
+            _out->stream << " AbsPox= " << u[j][i]-z[j][i]
+                    << " OtnPox= " << eps <<"          ";
+        }
+        _out->stream << "\n";
+
+    }
+    //_out->addGraph(x,y,u,1);
+    _out->addGraph(x[0],y,z,1);
+    double j=3+4;
 }

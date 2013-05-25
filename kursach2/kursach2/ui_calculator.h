@@ -1,8 +1,8 @@
 /********************************************************************************
 ** Form generated from reading UI file 'calculator.ui'
 **
-** Created: Mon Apr 22 18:53:35 2013
-**      by: Qt User Interface Compiler version 4.8.1
+** Created: Mon May 20 18:15:46 2013
+**      by: Qt User Interface Compiler version 4.8.3
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -16,18 +16,23 @@
 #include <QtGui/QButtonGroup>
 #include <QtGui/QDialog>
 #include <QtGui/QHeaderView>
+#include <QtGui/QListView>
 
 QT_BEGIN_NAMESPACE
 
 class Ui_Calculator
 {
 public:
+    QListView *listView;
 
     void setupUi(QDialog *Calculator)
     {
         if (Calculator->objectName().isEmpty())
             Calculator->setObjectName(QString::fromUtf8("Calculator"));
         Calculator->resize(400, 300);
+        listView = new QListView(Calculator);
+        listView->setObjectName(QString::fromUtf8("listView"));
+        listView->setGeometry(QRect(240, 270, 256, 192));
 
         retranslateUi(Calculator);
 

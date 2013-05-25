@@ -15,7 +15,10 @@ class Calculator : public QDialog
 public:
     explicit Calculator(QWidget *parent = 0,Outputter* out = 0,int nX=50, int nT=50);
     ~Calculator();
-    void calculate();
+    void calculateImplicit();
+    void calculateExplicit();
+    QVector<QVector<double> > getX(){return x;}
+    QVector<double> getTime(){return y;}
 private:
     double getAccurateValue(double x, double y);
     QVector<double> fillYacoby(QVector<double> us, QVector<double> oldU, QVector<double> h, double t);
