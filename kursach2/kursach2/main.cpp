@@ -5,6 +5,7 @@
 #include <QDialog>
 #include "outputter.h"
 #include "widget.h"
+#include "mainwindow.h"
 double* methodGauss02(const double* pA,	const double* pB,	int n );
 QVector<double> solveGauss(QVector<double> A, QVector<double> B);
 QVector<double> solveProgonka(QVector<double> A, QVector<double> B);
@@ -23,7 +24,22 @@ int main(int argc, char *argv[])
     webShower->setWeb(calculator.getX(),calculator.getTime());
     dialog.show();
 
+    MainWindow *w=new MainWindow(0,&out);
+    QVector<double> x,y;
+    const int n=100;
+    double leftBoundary=0;
+    double rightBoundary=1;
+    double h=(rightBoundary-leftBoundary)/(n+1);
+    x.push_back(leftBoundary);
+    y.push_back(sin(x.back()));
+    for(int i=1;i<n;i++)
+    {
+        x.push_back(x.back()+h);
+        y.push_back(sin(x.back()));
+    }
+    //w->setFunction(x,y);
 
+    w->show();
 
 
     out.view();

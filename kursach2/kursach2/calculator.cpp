@@ -34,15 +34,20 @@ Calculator::~Calculator()
 
 void Calculator::calculateImplicit()
 {
+
+
+
     double t=(rightBoundary-leftBoundary)/(nT-1);
     double h=(rightBoundary-leftBoundary)/(nX-1);
     u.push_back((QVector<double>)0);
     z.push_back((QVector<double>)0);
-
+    uOut.push_back((QVector<double>)0);
+    xOut.push_back(x[0]);
     foreach(double node,x[0])
     {
         u[0].push_back(getAccurateValue(node,0));   //Beginning
         z[0].push_back(getAccurateValue(node,0));  //conditions
+        uOut[0].push_back(getAccurateValue(node,0));
     }
     double time=leftBoundary;
     y.push_back(time);
@@ -61,10 +66,11 @@ void Calculator::calculateImplicit()
     xs.push_back(20);
     xs.push_back(40);
     QVector<double> s=getSteps(xs);
-
+    epsVector.push_back(0);
     while(time<rightBoundary-t)
     {
         time+=t;
+
         y.push_back(time);//should push only if step is accessed.
         z.push_back((QVector<double>)0);
         for (int i=0;i<x.back().size();i++)
@@ -105,9 +111,12 @@ void Calculator::calculateImplicit()
           double alpha;
           QVector<double> bettas=getCoeffs(uClarify, uTdiv2H,uTHdiv2,getSteps(x.back()),t,alpha);
           QVector<double> Web=x.back();
+          xOut.push_back(x.back());
           x.push_back(createNewWeb(oldX, bettas,getSteps(oldX)));
           QVector<double> uFitsNewWeb=solveInterpolation1(oldX,uClarify,x.back());
+          uOut.push_back(uClarify);
           u.push_back(uFitsNewWeb);
+
           double tAcc=t;
           t*=alpha;
 
@@ -123,7 +132,10 @@ void Calculator::calculateImplicit()
               _out->stream <<"time is " << time <<" X is "<< Web[i] <<" yApp=  " << uClarify[i] <<" yAcc=  " <<z.back()[i] <<" absPoh=  "<< uClarify[i]-z.back()[i]  << " otnPoh=  "<<eps <<"\n";
 
           }
+
           _out->stream << "max eps is "<<maxEps<<endl;
+          timeStep.push_back(t);
+          epsVector.push_back(fabs(eps));
          }
          _out->stream << "\n";
 
@@ -624,6 +636,7 @@ void Calculator::calculateExplicit()
    x[0].push_back(0);
    for (int i=1;i<nX;i++)
        x[0].push_back(x[0].back()+h);
+   xOut.push_back(x.back());
    int nT=100;
    double t=(1.0-0.0)/(nT-1);
    y.push_back(0);
@@ -637,13 +650,14 @@ void Calculator::calculateExplicit()
         u[0].push_back(getAccurateValue(node,0));
         z[0].push_back(getAccurateValue(node,0));
     }
-
+    uOut.push_back(u.back());
     for (int j=1;j<y.size();j++)
     {
         u.push_back((QVector<double>)0);
         z.push_back((QVector<double>)0);
         x.push_back((QVector<double>)0);
         x.back()=x[0];
+        xOut.push_back(x.back());
         for (int i=0;i<x[0].size();i++)
         {
             u[j].push_back(0);
@@ -651,7 +665,10 @@ void Calculator::calculateExplicit()
         }
 
 
+
+
         u[j][0]=getAccurateValue(0,y[j]);                     //Краевые
+
         u[j][x.back().size()-1]=getAccurateValue(x.back().back(),y[j]);    //Условия
         for (int i=1;i<x.back().size()-1;i++)
         {
@@ -662,10 +679,15 @@ void Calculator::calculateExplicit()
             _out->stream << " AbsPox= " << u[j][i]-z[j][i]
                     << " OtnPox= " << eps <<"          ";
         }
+        uOut.push_back(u.back());
         _out->stream << "\n";
 
     }
     //_out->addGraph(x,y,u,1);
     _out->addGraph(x[0],y,z,1);
+    epsVector.resize(y.size());
+    epsVector.fill(0);
+    timeStep.resize(y.size());
+    timeStep.fill(t);
     double j=3+4;
 }

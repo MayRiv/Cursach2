@@ -19,6 +19,11 @@ public:
     void calculateExplicit();
     QVector<QVector<double> > getX(){return x;}
     QVector<double> getTime(){return y;}
+    QVector<QVector<double> > getU(){return uOut;}
+    QVector<QVector<double> > getZ(){return z;}
+    QVector<double> getEps(){return epsVector;}
+    QVector<QVector<double> > uOut,xOut;
+    QVector<double> timeStep;
 private:
     double getAccurateValue(double x, double y);
     QVector<double> fillYacoby(QVector<double> us, QVector<double> oldU, QVector<double> h, double t);
@@ -41,7 +46,7 @@ private:
     double fi(QVector<double> oldU, double ui, double uiplus1, double uiminus1, int i, double hi, double hp1, double t);
     double getHDop(QVector<double> oldX, QVector<double> betta, double x);
     QVector<double> getTestWeb(QVector<double> oldX, QVector<double> betta);
-    QVector<double> y;//x=space, y=time
+    QVector<double> y,epsVector;//x=space, y=time
     QVector<QVector<double> > z,u,x;//z=accurate, u=approximate
     Ui::Calculator *ui;
     double a;
