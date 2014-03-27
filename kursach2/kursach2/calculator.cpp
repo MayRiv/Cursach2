@@ -676,9 +676,31 @@ void Calculator::calculateExplicit()
             double d2udx2=(u[j-1][i-1]-2*u[j-1][i]+u[j-1][i+1])/pow(h,2.0);
             u[j][i]=u[j-1][i]+t*a*(2*u[j-1][i]*dudx*dudx+pow(u[j-1][i],2)*d2udx2);
             double eps=(u[j][i]-z[j][i])/u[j][i]*100;
-            _out->stream << " AbsPox= " << u[j][i]-z[j][i]
+            /*_out->stream << " AbsPox= " << u[j][i]-z[j][i]
                     << " OtnPox= " << eps <<"          ";
+            */
         }
+        double maxEps=0;
+        for (int i=0;i<x.back().size();i++)
+        {
+            double eps=(u[j][i]-z[j][i])/u[j][i]*100.;
+            if (fabs(eps)>maxEps) maxEps=fabs(eps);
+            _out->stream << "time is " << y[j] <<" X is "<< x.back()[i] <<" yApp=  " << u[j][i] <<" yAcc=  " <<z[j][i] <<" absPoh=  "<< u[j][i]-z[j][i]  << " otnPoh=  "<<eps <<"\n";
+
+        }
+        _out->stream << "Max relative error is " << maxEps << "\n\n";
+        /*
+         *
+         *for (int i=0;i<uClarify.size();i++)
+          {
+              double eps=(uClarify[i]-z.back()[i])/uClarify[i]*100.;
+              if (eps>maxEps) maxEps=eps;
+              _out->stream <<"time is " << time <<" X is "<< Web[i] <<" yApp=  " << uClarify[i] <<" yAcc=  " <<z.back()[i] <<" absPoh=  "<< uClarify[i]-z.back()[i]  << " otnPoh=  "<<eps <<"\n";
+
+          }
+         *
+         *
+         **/
         uOut.push_back(u.back());
         _out->stream << "\n";
 

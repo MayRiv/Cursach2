@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent,Outputter* out) :
     ui->comboBoxGraphs->addItem("Time step");
     ui->comboBoxGraphs->addItem("Real local error");
     ui->comboBoxGraphs->addItem("Difference between results");
+    ui->comboBoxGraphs->addItem("Number of nodes");
     ui->implicit->setChecked(true);
     ui->spinBoxLayers->setRange(0,50);
     function.setRenderHint(QwtPlotItem::RenderAntialiased);
@@ -29,7 +30,7 @@ MainWindow::~MainWindow()
 }
 void MainWindow::setFunction(QVector<double> x, QVector<double> y)
 {
-    ui->widget->setPoints(x,y);
+
 }
 
 void MainWindow::on_calcButton_clicked()
@@ -44,9 +45,7 @@ void MainWindow::on_calcButton_clicked()
     _z=_c.getZ();
     _eps=_c.getEps();
     _timeStep=_c.timeStep;
-    //ui->widget->setPoints(_y,_eps);
-    //ui->widget->update();
-    ui->widget->update();
+
     function.setData(_y,_eps);
     ui->qwtPlot->replot();
     ui->spinBoxLayers->setRange(0,_y.size()-1);
@@ -69,10 +68,10 @@ void MainWindow::drawNewGraphic()
     }
     if (ui->comboBoxGraphs->currentText()=="Real local error")
        {
-        QVector<double> time;
+        /*QVector<double> time;
         time.push_back(0);
-        for(int i=0;i<_y.size();i++) time.push_back(time.back()+_y[i]);
-        function.setData(time,_eps);
+        for(int i=0;i<_y.size();i++) time.push_back(time.back()+_y[i]);*/
+        function.setData(_y,_eps);
        }
     if (ui->comboBoxGraphs->currentText()=="Difference between results")
     {
@@ -82,6 +81,13 @@ void MainWindow::drawNewGraphic()
         for(int i=0;i<_u[ui->spinBoxLayers->value()].size();i++)
             difference.push_back(fabs(_u[ui->spinBoxLayers->value()][i]-_z[ui->spinBoxLayers->value()][i]));
         function.setData(_x[ui->spinBoxLayers->value()],difference);
+    }
+    if (ui->comboBoxGraphs->currentText()=="Number of nodes")
+    {
+        QVector<double> numberOfNodes;
+        for (int i=0;i<_x.size();i++)
+            numberOfNodes.push_back(_x[i].size());
+        function.setData(_y,numberOfNodes);
     }
     ui->qwtPlot->replot();
 }

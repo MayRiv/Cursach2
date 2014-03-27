@@ -17,8 +17,8 @@ int main(int argc, char *argv[])
     Outputter out;
     QDialog dialog;
     Calculator calculator(&dialog,&out,60,200);
-    //calculator.calculateImplicit();
-    calculator.calculateExplicit();
+    calculator.calculateImplicit();
+    //calculator.calculateExplicit();
     //calculator.show();
     widget *webShower=new widget(&dialog);
     webShower->setWeb(calculator.getX(),calculator.getTime());
